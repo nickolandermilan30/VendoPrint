@@ -1,0 +1,21 @@
+{
+  "name": "vendoprint",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon backend/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase": "^11.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
