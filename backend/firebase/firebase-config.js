@@ -4,13 +4,13 @@ import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_APIKEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  databaseURL: process.env.FIREBASE_DATABASE_URL,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDERID,
-  appId: process.env.FIREBASE_APPID,
+  apiKey: "AIzaSyCGoFNIbWJ9OiTzMc46rSnoMvxNG2CcCyc",
+  authDomain: "ezprint-4258e.firebaseapp.com",
+  databaseURL: "https://ezprint-4258e-default-rtdb.firebaseio.com",
+  projectId: "ezprint-4258e",
+  storageBucket: "ezprint-4258e.appspot.com",
+  messagingSenderId: "602784580883",
+  appId: "1:602784580883:web:a1f6de33f9ecaa671186e6",
 };
 
 // Initialize Firebase

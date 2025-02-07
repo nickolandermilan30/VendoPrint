@@ -7,9 +7,20 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors()); // Enable CORS for frontend requests
 
-// Use Firebase routes
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
+}));
+
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  console.log("Request headers:", req.headers);
+  next();
+});
+
+// Use default route
 app.use("/api", BackendRoutes);
 
 app.get("/", (req, res) => {
@@ -18,5 +29,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.VITE_PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server started at http://localhost:${VITE_PORT}`);
+  console.log(`Server started at http://localhost:${PORT}`);
 });

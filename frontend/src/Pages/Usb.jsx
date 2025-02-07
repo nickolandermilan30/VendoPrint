@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft,FaPrint  } from 'react-icons/fa';
+import { FaArrowLeft,FaPrint, FaSpinner } from 'react-icons/fa';
 import M_small_price from './M_small_price';
+import { Worker, Viewer } from '@react-pdf-viewer/core'; 
+import '@react-pdf-viewer/core/lib/styles/index.css'; 
+import mammoth from "mammoth"; 
+import axios from "axios";
+
+
 const Usb = () => {
   const navigate = useNavigate();
   const [copies, setCopies] = useState(1);
@@ -17,13 +23,130 @@ const Usb = () => {
   const increaseCopies = () => setCopies(prev => prev + 1);
   const decreaseCopies = () => setCopies(prev => (prev > 1 ? prev - 1 : 1));
 
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/usb-files")
+      .then((response) => {
+        setFiles(response.data); 
+      })
+      .catch((error) => console.error("Error fetching USB files:", error));
+  }, []);
+  
+  
+
+  const uploadFileToRealtimeDatabase = async (file) => {
+    if (!file) {
+      alert("No file selected for upload!");
+      return;
+    }
+  
+    setUploading(true);
+  
+    try {
+      const response = await fetch("http://localhost:5000/api/add-data", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filename: file.filename,
+          fileContent: file.fileContent, 
+        }),
+      });
+  
+      const data = await response.json();
+      setUploading(false);
+  
+      if (data.success) {
+        alert("File uploaded successfully!");
+        fetchFilesFromRealtimeDatabase(); 
+      } else {
+        alert("File upload failed!");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setUploading(false);
+    }
+  };
+  
+  
+  
+  
+
+  const handleFileSelect = (file) => {
+    if (!file) {
+      alert("File not found!");
+      return;
+    }
+  
+    setSelectedFile(file.filename); 
+    setFileToUpload(file); 
+    handlePreview(file.fileContent, file.filename); 
+  };
+  
+  
+  
+  const fetchFilesFromRealtimeDatabase = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/get-files');
+      const data = await response.json();
+      setFiles(Object.values(data)); 
+    } catch (error) {
+      console.error('Error fetching files:', error);
+    }
+  };
+  
+  const handlePreview = (fileContent, fileName) => {
+    console.log("Previewing file:", { fileName, fileContent }); 
+  
+    setLoading(true);
+    const fileExtension = fileName.split(".").pop().toLowerCase();
+  
+    if (fileExtension === "pdf") {
+      const blob = new Blob([Uint8Array.from(atob(fileContent), (c) => c.charCodeAt(0))], {
+        type: "application/pdf",
+      });
+      const fileUrl = URL.createObjectURL(blob);
+      setFileType("pdf");
+      setFilePreviewUrl(fileUrl);
+    } else if (["jpg", "jpeg", "png", "gif"].includes(fileExtension)) {
+      setFileType("image");
+      setFilePreviewUrl(`data:image/${fileExtension};base64,${fileContent}`);
+    } else if (fileExtension === "txt") {
+      setFileType("txt");
+      setFileContent(atob(fileContent));
+    } else if (fileExtension === "docx") {
+      const arrayBuffer = Uint8Array.from(atob(fileContent), (c) => c.charCodeAt(0)).buffer;
+      mammoth
+        .extractRawText({ arrayBuffer })
+        .then((result) => setFileContent(result.value))
+        .finally(() => setLoading(false));
+    } else {
+      setFileType(null);
+      alert("Unsupported file type.");
+    }
+  
+    setLoading(false);
+  };
+  
+  
+  
+      const [files, setFiles] = useState([]);
+      const [selectedFile, setSelectedFile] = useState("");
+      const [fileType, setFileType] = useState(null); 
+      const [fileContent, setFileContent] = useState(""); 
+      const [filePreviewUrl, setFilePreviewUrl] = useState('');
+      const [loading, setLoading] = useState(false); 
+      const [uploading, setUploading] = useState(false); 
+      const [fileToUpload, setFileToUpload] = useState(null); 
+
   return (
     <div className="p-4">
       <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
         Kiosk Vendo Printer
       </h1>
       
-      <div className="flex w-full h-[700px] bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4">
+      <div className="flex w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4">
         <div className="w-1/2">
           <div>
             <div className="flex items-center">
@@ -38,14 +161,45 @@ const Usb = () => {
             
             <p className="mt-4 text-3xl font-bold text-[#31304D]">Choose File</p>
             <div className="mt-4 w-64 h-32 bg-white border-2 border-[#31304D] rounded-lg p-2 overflow-y-auto">
-              <ul className="text-[#31304D]">
-                <li>Document 1</li>
-                <li>Document 2</li>
-                <li>Document 3</li>
-                <li>Document 4</li>
-              </ul>
-            </div>
+            <ul className="text-[#31304D] overflow-y-auto">
+              {files.length > 0 ? (
+                files.map((file, index) => (
+                  <li
+                    key={index}
+                    className={`cursor-pointer p-2 ${selectedFile === file.filename ? "bg-gray-300" : ""}`}
+                    onClick={() => {
+                      setSelectedFile(file.filename); // Highlight the selected file
+                      handlePreview(file.fileContent, file.filename); // Trigger preview
+                    }}
+                  >
+                    {file.filename}
+                  </li>
+                ))
+              ) : (
+                <p className="text-gray-500">No files found.</p>
+              )}
+            </ul>
 
+
+
+            </div>
+            <div className="mt-4">
+
+            <button
+            onClick={() => {
+              if (fileToUpload) {
+                uploadFileToRealtimeDatabase(fileToUpload);
+              } else {
+                alert('No file selected! Please choose a file first.');
+              }
+            }}
+            className="mt-4 w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg shadow-md"
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
+              </div>
+          
             <div className="flex items-center mt-6">
               <p className="text-2xl font-bold text-[#31304D] mr-4">Copies:</p>
               <div className="flex items-center space-x-4">
@@ -167,20 +321,42 @@ const Usb = () => {
           </div>
         </div>
 
-        
-
-        {/* Overview Section */}
-
-        <div className="w-2/1 bg-white border-2 border-[#31304D] rounded-lg p-6 flex flex-col justify-between h-full">
-          <div>
-            <h2 className="text-3xl font-bold text-[#31304D] mb-4">Overview</h2>
-            <p className="text-lg text-[#31304D]">Summary of your selections will appear here.</p>
+     {/* File Preview Section */}
+     <div className="w-1/2 bg-white border-2 border-[#31304D] rounded-lg p-6 flex flex-col">
+          <h2 className="text-3xl font-bold text-[#31304D] mb-4">File Preview</h2>
+          <div className="flex-1 overflow-y-auto">
+            {uploading && (
+              <div className="flex items-center justify-center">
+                <FaSpinner className="animate-spin text-[#31304D] text-3xl" />
+                <p className="ml-4 text-lg text-[#31304D]">Uploading...</p>
+              </div>
+            )}
+            {loading && (
+              <div className="flex items-center justify-center">
+                <FaSpinner className="animate-spin text-[#31304D] text-3xl" />
+                <p className="ml-4 text-lg text-[#31304D]">Loading preview...</p>
+              </div>
+            )}
+            {fileType === 'pdf' && filePreviewUrl && (
+              <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.14.305/build/pdf.worker.min.js">
+                <Viewer fileUrl={filePreviewUrl} />
+              </Worker>
+            )}
+            {fileType === 'image' && filePreviewUrl && (
+              <img src={filePreviewUrl} alt="Selected File" className="w-full h-auto rounded-lg" />
+            )}
+            {fileType === 'txt' && <pre className="whitespace-pre-wrap">{fileContent}</pre>}
+            {fileType === 'docx' && <div dangerouslySetInnerHTML={{ __html: fileContent }} />}
+            {!fileType && !selectedFile && (
+              <p className="text-lg text-[#31304D]">Select a file to preview it here.</p>
+            )}
           </div>
-          <button className="w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-auto flex items-center justify-center">
+          <button className="w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-4 flex items-center justify-center">
             Print <FaPrint className="ml-2 text-white" />
           </button>
         </div>
       </div>
+
       {isModalOpen && (
         <div className="fixed inset-0 flex justify-end items-center  bg-opacity-30 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 h-full relative">
