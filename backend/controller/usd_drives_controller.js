@@ -48,7 +48,7 @@ const UsbList = async (req, res) => {
       // Filter out null values (in case of errors reading some files)
       const validFiles = filesWithContent.filter((file) => file !== null);
 
-      res.json(validFiles); // Respond with filenames and Base64 content
+      res.json(validFiles);  
     });
   } catch (error) {
     res.status(500).json({ error: "Error detecting USB drive" });

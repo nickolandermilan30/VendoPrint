@@ -5,6 +5,7 @@ import M_small_price from './M_small_price';
 import { Worker, Viewer } from '@react-pdf-viewer/core'; 
 import '@react-pdf-viewer/core/lib/styles/index.css'; 
 import mammoth from "mammoth"; 
+
 import axios from "axios";
 
 
@@ -23,67 +24,67 @@ const Usb = () => {
   const increaseCopies = () => setCopies(prev => prev + 1);
   const decreaseCopies = () => setCopies(prev => (prev > 1 ? prev - 1 : 1));
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/usb-files")
-      .then((response) => {
-        setFiles(response.data); 
-      })
-      .catch((error) => console.error("Error fetching USB files:", error));
-  }, []);
-  
   
 
-  const uploadFileToRealtimeDatabase = async (file) => {
-    if (!file) {
-      alert("No file selected for upload!");
-      return;
+  const uploadFileToRealtimeDatabase = async () => {
+    if (!fileToUpload) {
+        alert("No file selected for upload!");
+        return;
     }
-  
+
     setUploading(true);
-  
-    try {
-      const response = await fetch("http://localhost:5000/api/add-data", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          filename: file.filename,
-          fileContent: file.fileContent, 
-        }),
-      });
-  
-      const data = await response.json();
-      setUploading(false);
-  
-      if (data.success) {
-        alert("File uploaded successfully!");
-        fetchFilesFromRealtimeDatabase(); 
-      } else {
-        alert("File upload failed!");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setUploading(false);
-    }
-  };
+
+    const reader = new FileReader();
+
+    reader.onloadend = async () => {
+        try {
+            const response = await fetch("http://localhost:5000/api/add-data", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    filename: fileToUpload.name,
+                    fileContent: reader.result.split(",")[1], // Convert Base64
+                }),
+            });
+
+            const data = await response.json();
+            setUploading(false);
+
+            if (data.success) {
+                alert("File uploaded successfully!");
+                fetchFilesFromRealtimeDatabase();
+            } else {
+                alert("File upload failed!");
+            }
+        } catch (error) {
+            console.error("Error uploading file:", error);
+            setUploading(false);
+        }
+    };
+
+    reader.readAsDataURL(fileToUpload); 
+};
+
+
   
   
   
   
 
-  const handleFileSelect = (file) => {
-    if (!file) {
-      alert("File not found!");
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]; 
+  if (!file) {
+      alert("No file selected!");
       return;
-    }
-  
-    setSelectedFile(file.filename); 
-    setFileToUpload(file); 
-    handlePreview(file.fileContent, file.filename); 
-  };
-  
+  }
+
+  setSelectedFile(file.name); 
+  setFileToUpload(file); 
+  handlePreview(file, file.name); 
+};
+
   
   
   const fetchFilesFromRealtimeDatabase = async () => {
@@ -96,42 +97,51 @@ const Usb = () => {
     }
   };
   
-  const handlePreview = (fileContent, fileName) => {
-    console.log("Previewing file:", { fileName, fileContent }); 
-  
+  const handlePreview = (file, fileName) => {
+    if (!fileName) {
+        console.error("Error: fileName is undefined or invalid");
+        return;
+    }
+
+    console.log("Previewing file:", { fileName });
+
     setLoading(true);
     const fileExtension = fileName.split(".").pop().toLowerCase();
-  
+
     if (fileExtension === "pdf") {
-      const blob = new Blob([Uint8Array.from(atob(fileContent), (c) => c.charCodeAt(0))], {
-        type: "application/pdf",
-      });
-      const fileUrl = URL.createObjectURL(blob);
-      setFileType("pdf");
-      setFilePreviewUrl(fileUrl);
+        const blob = new Blob([file], { type: "application/pdf" });
+        const fileUrl = URL.createObjectURL(blob);
+        setFileType("pdf");
+        setFilePreviewUrl(fileUrl);
     } else if (["jpg", "jpeg", "png", "gif"].includes(fileExtension)) {
-      setFileType("image");
-      setFilePreviewUrl(`data:image/${fileExtension};base64,${fileContent}`);
+        const fileReader = new FileReader();
+        fileReader.onload = () => setFilePreviewUrl(fileReader.result);
+        fileReader.readAsDataURL(file);
+        setFileType("image");
     } else if (fileExtension === "txt") {
-      setFileType("txt");
-      setFileContent(atob(fileContent));
+        const fileReader = new FileReader();
+        fileReader.onload = () => setFileContent(fileReader.result);
+        fileReader.readAsText(file);
+        setFileType("txt");
     } else if (fileExtension === "docx") {
-      const arrayBuffer = Uint8Array.from(atob(fileContent), (c) => c.charCodeAt(0)).buffer;
-      mammoth
-        .extractRawText({ arrayBuffer })
-        .then((result) => setFileContent(result.value))
-        .finally(() => setLoading(false));
+        const fileReader = new FileReader();
+        fileReader.onload = async (event) => {
+            const arrayBuffer = event.target.result;
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            setFileContent(result.value);
+        };
+        fileReader.readAsArrayBuffer(file);
+        setFileType("docx");
     } else {
-      setFileType(null);
-      alert("Unsupported file type.");
+        setFileType(null);
+        alert("Unsupported file type.");
     }
-  
+
     setLoading(false);
-  };
+};
+
   
   
-  
-      const [files, setFiles] = useState([]);
       const [selectedFile, setSelectedFile] = useState("");
       const [fileType, setFileType] = useState(null); 
       const [fileContent, setFileContent] = useState(""); 
@@ -139,6 +149,7 @@ const Usb = () => {
       const [loading, setLoading] = useState(false); 
       const [uploading, setUploading] = useState(false); 
       const [fileToUpload, setFileToUpload] = useState(null); 
+
 
   return (
     <div className="p-4">
@@ -158,31 +169,9 @@ const Usb = () => {
               </button>
               <p className="text-3xl font-bold text-[#31304D]">USB</p>
             </div>
-            
+         
             <p className="mt-4 text-3xl font-bold text-[#31304D]">Choose File</p>
-            <div className="mt-4 w-64 h-32 bg-white border-2 border-[#31304D] rounded-lg p-2 overflow-y-auto">
-            <ul className="text-[#31304D] overflow-y-auto">
-              {files.length > 0 ? (
-                files.map((file, index) => (
-                  <li
-                    key={index}
-                    className={`cursor-pointer p-2 ${selectedFile === file.filename ? "bg-gray-300" : ""}`}
-                    onClick={() => {
-                      setSelectedFile(file.filename); // Highlight the selected file
-                      handlePreview(file.fileContent, file.filename); // Trigger preview
-                    }}
-                  >
-                    {file.filename}
-                  </li>
-                ))
-              ) : (
-                <p className="text-gray-500">No files found.</p>
-              )}
-            </ul>
-
-
-
-            </div>
+            <input type="file" onChange={handleFileSelect} className="mt-4 w-full border-2 border-[#31304D] p-2" />
             <div className="mt-4">
 
             <button
@@ -207,7 +196,7 @@ const Usb = () => {
                   className="w-8 h-8 bg-gray-200 text-[#31304D] flex items-center justify-center rounded-lg border-2 border-[#31304D] text-2xl"
                   onClick={decreaseCopies}
                 >
-                  −
+                  
                 </button>
                 <div className="w-14 h-10 flex items-center justify-center bg-gray-200 border-2 border-[#31304D] rounded-lg">
                   <span className="text-3xl font-bold text-[#31304D]">{copies}</span>

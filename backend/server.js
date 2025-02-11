@@ -6,12 +6,15 @@ import BackendRoutes from "./routes/backend_route.js";
 dotenv.config();
 
 const app = express();
-app.use(express.json());
+
+
+app.use(express.json({ limit: "Infinity" }));
+app.use(express.urlencoded({ limit: "Infinity", extended: true }));
 
 app.use(cors({
-  origin: '*', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type'],
+  origin: "http://localhost:5173", 
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type"],
 }));
 
 app.use((req, res, next) => {
@@ -27,7 +30,7 @@ app.get("/", (req, res) => {
   res.send("Welcome to the Firebase-integrated server");
 });
 
-const PORT = process.env.VITE_PORT || 5000;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server started at http://localhost:${PORT}`);
 });
