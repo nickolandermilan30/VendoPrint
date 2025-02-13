@@ -17,11 +17,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type"],
 }));
 
-app.use((req, res, next) => {
-  console.log(`Incoming request: ${req.method} ${req.url}`);
-  console.log("Request headers:", req.headers);
-  next();
-});
+
 
 // Use default route
 app.use("/api", BackendRoutes);
