@@ -24,9 +24,19 @@ const Usb = () => {
   const increaseCopies = () => setCopies(prev => prev + 1);
   const decreaseCopies = () => setCopies(prev => (prev > 1 ? prev - 1 : 1));
 
+
+  const [selectedFile, setSelectedFile] = useState("");
+  const [fileType, setFileType] = useState(null); 
+  const [fileContent, setFileContent] = useState(""); 
+  const [filePreviewUrl, setFilePreviewUrl] = useState('');
+  const [loading, setLoading] = useState(false); 
+  const [uploading, setUploading] = useState(false); 
+  const [fileToUpload, setFileToUpload] = useState(null); 
+
+
   
 
-  const uploadFileToRealtimeDatabase = async () => {
+  const uploadFileToCloudinary = async () => {
     if (!fileToUpload) {
         alert("No file selected for upload!");
         return;
@@ -34,44 +44,36 @@ const Usb = () => {
 
     setUploading(true);
 
-    const reader = new FileReader();
+    
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("upload_preset", "VendoPrint"); 
 
-    reader.onloadend = async () => {
-        try {
-            const response = await fetch("http://localhost:5000/api/add-data", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    filename: fileToUpload.name,
-                    fileContent: reader.result.split(",")[1], // Convert Base64
-                }),
-            });
-
+    try {
+        const response = await fetch("https://api.cloudinary.com/v1_1/dxgepee4v/upload", {
+            method: "POST",
+            body: formData
+        });
             const data = await response.json();
             setUploading(false);
 
-            if (data.success) {
-                alert("File uploaded successfully!");
-                fetchFilesFromRealtimeDatabase();
-            } else {
-                alert("File upload failed!");
-            }
+            if (data.secure_url) {
+              alert("File uploaded successfully!");
+              console.log("Cloudinary URL:", data.secure_url);
+          } else {
+              alert("File upload failed!");
+          }
         } catch (error) {
             console.error("Error uploading file:", error);
             setUploading(false);
-        }
+        
     };
 
     reader.readAsDataURL(fileToUpload); 
 };
 
 
-  
-  
-  
-  
+
 
 const handleFileSelect = (event) => {
   const file = event.target.files[0]; 
@@ -127,7 +129,7 @@ const handleFileSelect = (event) => {
         const fileReader = new FileReader();
         fileReader.onload = async (event) => {
             const arrayBuffer = event.target.result;
-            const result = await mammoth.extractRawText({ arrayBuffer });
+            const result = await  mammoth.convertToHtml({ arrayBuffer });
             setFileContent(result.value);
         };
         fileReader.readAsArrayBuffer(file);
@@ -139,16 +141,6 @@ const handleFileSelect = (event) => {
 
     setLoading(false);
 };
-
-  
-  
-      const [selectedFile, setSelectedFile] = useState("");
-      const [fileType, setFileType] = useState(null); 
-      const [fileContent, setFileContent] = useState(""); 
-      const [filePreviewUrl, setFilePreviewUrl] = useState('');
-      const [loading, setLoading] = useState(false); 
-      const [uploading, setUploading] = useState(false); 
-      const [fileToUpload, setFileToUpload] = useState(null); 
 
 
   return (
@@ -177,7 +169,7 @@ const handleFileSelect = (event) => {
             <button
             onClick={() => {
               if (fileToUpload) {
-                uploadFileToRealtimeDatabase(fileToUpload);
+                uploadFileToCloudinary(fileToUpload);
               } else {
                 alert('No file selected! Please choose a file first.');
               }
