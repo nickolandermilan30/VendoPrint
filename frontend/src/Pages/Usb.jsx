@@ -16,19 +16,127 @@ const Usb = () => {
   const [selectedColorOption, setSelectedColorOption] = useState("Color");
   const [selectedOrientationOption, setSelectedOrientationOption] = useState("Portrait");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [fileToUpload, setFileToUpload] = useState(null);
+  const increaseCopies = () => setCopies(prev => prev + 1);
+  const decreaseCopies = () => setCopies(prev => (prev > 1 ? prev - 1 : 1));
 
-  const increaseCopies = () => setCopies((prev) => prev + 1);
-  const decreaseCopies = () => setCopies((prev) => (prev > 1 ? prev - 1 : 1));
+
+  const [selectedFile, setSelectedFile] = useState("");
+  const [fileType, setFileType] = useState(null); 
+  const [fileContent, setFileContent] = useState(""); 
+  const [filePreviewUrl, setFilePreviewUrl] = useState('');
+  const [loading, setLoading] = useState(false); 
+  const [uploading, setUploading] = useState(false); 
+  const [fileToUpload, setFileToUpload] = useState(null); 
+
+
+  
+
+  const uploadFileToCloudinary = async () => {
+    if (!fileToUpload) {
+        alert("No file selected for upload!");
+        return;
+    }
+
+    setUploading(true);
+
+    
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+    formData.append("upload_preset", "VendoPrint"); 
+
+    try {
+        const response = await fetch("https://api.cloudinary.com/v1_1/dxgepee4v/upload", {
+            method: "POST",
+            body: formData
+        });
+            const data = await response.json();
+            setUploading(false);
+
+            if (data.secure_url) {
+              alert("File uploaded successfully!");
+              console.log("Cloudinary URL:", data.secure_url);
+          } else {
+              alert("File upload failed!");
+          }
+        } catch (error) {
+            console.error("Error uploading file:", error);
+            setUploading(false);
+        
+    };
+
+    reader.readAsDataURL(fileToUpload); 
+};
+
+
+
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (!file) {
       alert("No file selected!");
       return;
+  }
+
+  setSelectedFile(file.name); 
+  setFileToUpload(file); 
+  handlePreview(file, file.name); 
+};
+
+  
+  
+  const fetchFilesFromRealtimeDatabase = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/get-files');
+      const data = await response.json();
+      setFiles(Object.values(data)); 
+    } catch (error) {
+      console.error('Error fetching files:', error);
     }
-    setFileToUpload(file);
   };
+  
+  const handlePreview = (file, fileName) => {
+    if (!fileName) {
+        console.error("Error: fileName is undefined or invalid");
+        return;
+    }
+
+    console.log("Previewing file:", { fileName });
+
+    setLoading(true);
+    const fileExtension = fileName.split(".").pop().toLowerCase();
+
+    if (fileExtension === "pdf") {
+        const blob = new Blob([file], { type: "application/pdf" });
+        const fileUrl = URL.createObjectURL(blob);
+        setFileType("pdf");
+        setFilePreviewUrl(fileUrl);
+    } else if (["jpg", "jpeg", "png", "gif"].includes(fileExtension)) {
+        const fileReader = new FileReader();
+        fileReader.onload = () => setFilePreviewUrl(fileReader.result);
+        fileReader.readAsDataURL(file);
+        setFileType("image");
+    } else if (fileExtension === "txt") {
+        const fileReader = new FileReader();
+        fileReader.onload = () => setFileContent(fileReader.result);
+        fileReader.readAsText(file);
+        setFileType("txt");
+    } else if (fileExtension === "docx") {
+        const fileReader = new FileReader();
+        fileReader.onload = async (event) => {
+            const arrayBuffer = event.target.result;
+            const result = await  mammoth.convertToHtml({ arrayBuffer });
+            setFileContent(result.value);
+        };
+        fileReader.readAsArrayBuffer(file);
+        setFileType("docx");
+    } else {
+        setFileType(null);
+        alert("Unsupported file type.");
+    }
+
+    setLoading(false);
+};
+
 
   return (
     <div className="p-4">
@@ -51,9 +159,24 @@ const Usb = () => {
             </div>
 
             <p className="mt-4 text-3xl font-bold text-[#31304D]">Choose File</p>
-            <input type="file" onChange={handleFileSelect} className="mt-4  border-2 border-[#31304D] p-2" />
+            <input type="file" onChange={handleFileSelect} className="mt-4 w-full border-2 border-[#31304D] p-2" />
+            <div className="mt-4">
 
-
+            <button
+            onClick={() => {
+              if (fileToUpload) {
+                uploadFileToCloudinary(fileToUpload);
+              } else {
+                alert('No file selected! Please choose a file first.');
+              }
+            }}
+            className="mt-4 w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg shadow-md"
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
+              </div>
+          
             <div className="flex items-center mt-6">
               <p className="text-2xl font-bold text-[#31304D] mr-4">Copies:</p>
               <div className="flex items-center space-x-4">
