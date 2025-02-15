@@ -64,12 +64,7 @@ const Usb = () => {
         
 
           // Now push data to Firebase Realtime Database
-          const filesRef = dbRef(realtimeDb, "files");
-          await push(filesRef, {
-              name: file.name,
-              url: url,
-              uploadedAt: new Date().toISOString(),
-          });
+        
     
       alert("File uploaded and saved successfully!");
       
@@ -82,6 +77,40 @@ const Usb = () => {
 );
 
 };
+
+// Uploading data file copies and ect. in firebase
+
+const handlePrint = async () => {
+  if (!filePreviewUrl) {
+      alert("No file uploaded! Please upload a file before printing.");
+      return;
+  }
+
+  try {
+      // Reference to Firebase Realtime Database 
+      const printJobsRef = dbRef(realtimeDb, "files");
+
+      // Push print job data to Firebase
+          await push(printJobsRef, {
+          fileName: fileToUpload?.name,
+          fileUrl: filePreviewUrl,
+          copies: copies,
+          paperSize: selectedSize,
+          colorOption: selectedColorOption,
+          pageOption: selectedPageOption,
+          orientation: selectedOrientationOption,
+          timestamp: new Date().toISOString(),
+      });
+
+      // Simulate printing 
+      window.print();
+  } catch (error) {
+      console.error("Error inserting print job data:", error);
+      alert("Failed to add print job. Please try again.");
+  }
+};
+
+
 const handleFileSelect = (event) => {
   const file = event.target.files[0];
   if (!file) {
@@ -221,7 +250,7 @@ uploadFileToFirebase(file);
       </div>
 
       {/* Print Button */}
-      <button className="w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-4 flex items-center justify-center">
+      <button onClick={handlePrint} className="w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-4 flex items-center justify-center">
         Print <FaPrint className="ml-2 text-white" />
       </button>
 
