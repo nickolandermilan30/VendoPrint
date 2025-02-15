@@ -1,6 +1,6 @@
-import { ref, set } from "firebase/database";
+import { getDatabase, ref, set } from "firebase/database";
 import { uploadToCloudinary } from "../cloudinarry/cloudinarry_config.js";
-import { realtimeDb } from "../firebase/firebase-config.js";
+import { realtimeDb,storage } from "../firebase/firebase-config.js";
 
   // Add data to Realtime Database
   export const addData = async (req, res) => {
@@ -28,7 +28,7 @@ import { realtimeDb } from "../firebase/firebase-config.js";
 
 
 
-  // Get data from Realtime Database
+  // Get data from Realtimes Database
   export const getData = async (req, res) => {
     try {
         const dbRef = ref(realtimeDb, "files"); 
@@ -92,4 +92,17 @@ export const uploadFile = async (req, res) => {
     console.error("Upload error:", error);
     return res.status(500).json({ error: error.message });
   }
+};
+
+export const fetchFilesFromRealtimeDatabase = () => {
+  const filesRef = dbRef(realtimeDb, "files");
+  onValue(filesRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const filesData = snapshot.val();
+      const filesArray = Object.values(filesData);
+      console.log("Fetched files:", filesArray);
+    } else {
+      console.log("No files found.");
+    }
+  });
 };

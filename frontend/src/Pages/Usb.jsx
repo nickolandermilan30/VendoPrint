@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft,FaPrint, FaSpinner } from 'react-icons/fa';
-import M_small_price from './M_small_price';
-import { Worker, Viewer } from '@react-pdf-viewer/core'; 
-import '@react-pdf-viewer/core/lib/styles/index.css'; 
-import mammoth from "mammoth"; 
-
-import axios from "axios";
-
-
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft, FaPrint } from "react-icons/fa";
+import M_small_price from "./M_small_price";
+import DocumentPreview from "../components/document_preview";
+import SmartPriceToggle from "../components/smart_price";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { getDatabase, ref as dbRef, push } from "firebase/database";
+import { realtimeDb,storage } from "../../../backend/firebase/firebase-config";
+import mammoth from "mammoth";
 const Usb = () => {
   const navigate = useNavigate();
   const [copies, setCopies] = useState(1);
@@ -32,117 +31,98 @@ const Usb = () => {
   const [loading, setLoading] = useState(false); 
   const [uploading, setUploading] = useState(false); 
   const [fileToUpload, setFileToUpload] = useState(null); 
+  const [downloadURL, setDownloadURL] = useState("");
+  const [files, setFiles] = useState([]);
 
+ 
 
-  
-
-  const uploadFileToCloudinary = async () => {
-    if (!fileToUpload) {
+// Upload file to Firebase Storage and save link to Realtime Database
+  const uploadFileToFirebase = async (file) => {
+    if (!file) {
         alert("No file selected for upload!");
         return;
     }
 
     setUploading(true);
-
+    const storageRef = ref(storage, `uploads/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef,file);
     
-    const formData = new FormData();
-    formData.append("file", fileToUpload);
-    formData.append("upload_preset", "VendoPrint"); 
-
-    try {
-        const response = await fetch("https://api.cloudinary.com/v1_1/dxgepee4v/upload", {
-            method: "POST",
-            body: formData
-        });
-            const data = await response.json();
-            setUploading(false);
-
-            if (data.secure_url) {
-              alert("File uploaded successfully!");
-              console.log("Cloudinary URL:", data.secure_url);
-          } else {
-              alert("File upload failed!");
-          }
-        } catch (error) {
-            console.error("Error uploading file:", error);
-            setUploading(false);
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        console.log(`Upload progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`);
+      },
+      (error) => {
+        console.error("Upload failed", error);
+        setUploading(false);
+      },
+      async () => {
+        try {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          setFilePreviewUrl(url);
+          console.log("File available at:", url);
         
-    };
 
-    reader.readAsDataURL(fileToUpload); 
+          // Now push data to Firebase Realtime Database
+        
+    
+      alert("File uploaded and saved successfully!");
+      
+    } catch (error) {
+      console.error("Error getting download URL or saving data:", error);
+  }
+  setUploading(false)
+}
+
+);
+
 };
 
+// Uploading data file copies and ect. in firebase
 
-
-
-const handleFileSelect = (event) => {
-  const file = event.target.files[0]; 
-  if (!file) {
-      alert("No file selected!");
+const handlePrint = async () => {
+  if (!filePreviewUrl) {
+      alert("No file uploaded! Please upload a file before printing.");
       return;
   }
 
-  setSelectedFile(file.name); 
-  setFileToUpload(file); 
-  handlePreview(file, file.name); 
-};
+  try {
+      // Reference to Firebase Realtime Database 
+      const printJobsRef = dbRef(realtimeDb, "files");
 
-  
-  
-  const fetchFilesFromRealtimeDatabase = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/get-files');
-      const data = await response.json();
-      setFiles(Object.values(data)); 
-    } catch (error) {
-      console.error('Error fetching files:', error);
-    }
-  };
-  
-  const handlePreview = (file, fileName) => {
-    if (!fileName) {
-        console.error("Error: fileName is undefined or invalid");
-        return;
-    }
+      // Push print job data to Firebase
+          await push(printJobsRef, {
+          fileName: fileToUpload?.name,
+          fileUrl: filePreviewUrl,
+          copies: copies,
+          paperSize: selectedSize,
+          colorOption: selectedColorOption,
+          pageOption: selectedPageOption,
+          orientation: selectedOrientationOption,
+          timestamp: new Date().toISOString(),
+      });
 
-    console.log("Previewing file:", { fileName });
-
-    setLoading(true);
-    const fileExtension = fileName.split(".").pop().toLowerCase();
-
-    if (fileExtension === "pdf") {
-        const blob = new Blob([file], { type: "application/pdf" });
-        const fileUrl = URL.createObjectURL(blob);
-        setFileType("pdf");
-        setFilePreviewUrl(fileUrl);
-    } else if (["jpg", "jpeg", "png", "gif"].includes(fileExtension)) {
-        const fileReader = new FileReader();
-        fileReader.onload = () => setFilePreviewUrl(fileReader.result);
-        fileReader.readAsDataURL(file);
-        setFileType("image");
-    } else if (fileExtension === "txt") {
-        const fileReader = new FileReader();
-        fileReader.onload = () => setFileContent(fileReader.result);
-        fileReader.readAsText(file);
-        setFileType("txt");
-    } else if (fileExtension === "docx") {
-        const fileReader = new FileReader();
-        fileReader.onload = async (event) => {
-            const arrayBuffer = event.target.result;
-            const result = await  mammoth.convertToHtml({ arrayBuffer });
-            setFileContent(result.value);
-        };
-        fileReader.readAsArrayBuffer(file);
-        setFileType("docx");
-    } else {
-        setFileType(null);
-        alert("Unsupported file type.");
-    }
-
-    setLoading(false);
+      // Simulate printing 
+      window.print();
+  } catch (error) {
+      console.error("Error inserting print job data:", error);
+      alert("Failed to add print job. Please try again.");
+  }
 };
 
 
+const handleFileSelect = (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    alert("No file selected!");
+    return;
+}
+
+setFileToUpload(file);
+uploadFileToFirebase(file); 
+};
+
+  
   return (
     <div className="p-4">
       <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
@@ -169,7 +149,7 @@ const handleFileSelect = (event) => {
             <button
             onClick={() => {
               if (fileToUpload) {
-                uploadFileToCloudinary(fileToUpload);
+                
               } else {
                 alert('No file selected! Please choose a file first.');
               }
@@ -302,41 +282,15 @@ const handleFileSelect = (event) => {
           </div>
         </div>
 
-     {/* File Preview Section */}
-     <div className="w-1/2 bg-white border-2 border-[#31304D] rounded-lg p-6 flex flex-col">
-          <h2 className="text-3xl font-bold text-[#31304D] mb-4">File Preview</h2>
-          <div className="flex-1 overflow-y-auto">
-            {uploading && (
-              <div className="flex items-center justify-center">
-                <FaSpinner className="animate-spin text-[#31304D] text-3xl" />
-                <p className="ml-4 text-lg text-[#31304D]">Uploading...</p>
-              </div>
-            )}
-            {loading && (
-              <div className="flex items-center justify-center">
-                <FaSpinner className="animate-spin text-[#31304D] text-3xl" />
-                <p className="ml-4 text-lg text-[#31304D]">Loading preview...</p>
-              </div>
-            )}
-            {fileType === 'pdf' && filePreviewUrl && (
-              <Worker workerUrl="https://unpkg.com/pdfjs-dist@2.14.305/build/pdf.worker.min.js">
-                <Viewer fileUrl={filePreviewUrl} />
-              </Worker>
-            )}
-            {fileType === 'image' && filePreviewUrl && (
-              <img src={filePreviewUrl} alt="Selected File" className="w-full h-auto rounded-lg" />
-            )}
-            {fileType === 'txt' && <pre className="whitespace-pre-wrap">{fileContent}</pre>}
-            {fileType === 'docx' && <div dangerouslySetInnerHTML={{ __html: fileContent }} />}
-            {!fileType && !selectedFile && (
-              <p className="text-lg text-[#31304D]">Select a file to preview it here.</p>
-            )}
-          </div>
-          <button className="w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-4 flex items-center justify-center">
-            Print <FaPrint className="ml-2 text-white" />
-          </button>
-        </div>
+        {/* Right Side - File Preview */}
+        <DocumentPreview fileUrl={filePreviewUrl} fileName={fileToUpload?.name} />
+
       </div>
+
+      {/* Print Button */}
+      <button onClick={handlePrint} className="w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-4 flex items-center justify-center">
+        Print <FaPrint className="ml-2 text-white" />
+      </button>
 
       {isModalOpen && (
         <div className="fixed inset-0 flex justify-end items-center  bg-opacity-30 backdrop-blur-sm">
