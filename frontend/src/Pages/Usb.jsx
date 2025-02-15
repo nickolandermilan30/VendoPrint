@@ -4,6 +4,10 @@ import { FaArrowLeft, FaPrint } from "react-icons/fa";
 import M_small_price from "./M_small_price";
 import DocumentPreview from "../components/document_preview";
 import SmartPriceToggle from "../components/smart_price";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { getDatabase, ref as dbRef, push } from "firebase/database";
+import { realtimeDb,storage } from "../../../backend/firebase/firebase-config";
+import mammoth from "mammoth";
 const Usb = () => {
   const navigate = useNavigate();
   const [copies, setCopies] = useState(1);
@@ -27,117 +31,69 @@ const Usb = () => {
   const [loading, setLoading] = useState(false); 
   const [uploading, setUploading] = useState(false); 
   const [fileToUpload, setFileToUpload] = useState(null); 
+  const [downloadURL, setDownloadURL] = useState("");
+  const [files, setFiles] = useState([]);
 
+ 
 
-  
-
-  const uploadFileToCloudinary = async () => {
-    if (!fileToUpload) {
+// Upload file to Firebase Storage and save link to Realtime Database
+  const uploadFileToFirebase = async (file) => {
+    if (!file) {
         alert("No file selected for upload!");
         return;
     }
 
     setUploading(true);
-
+    const storageRef = ref(storage, `uploads/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef,file);
     
-    const formData = new FormData();
-    formData.append("file", fileToUpload);
-    formData.append("upload_preset", "VendoPrint"); 
-
-    try {
-        const response = await fetch("https://api.cloudinary.com/v1_1/dxgepee4v/upload", {
-            method: "POST",
-            body: formData
-        });
-            const data = await response.json();
-            setUploading(false);
-
-            if (data.secure_url) {
-              alert("File uploaded successfully!");
-              console.log("Cloudinary URL:", data.secure_url);
-          } else {
-              alert("File upload failed!");
-          }
-        } catch (error) {
-            console.error("Error uploading file:", error);
-            setUploading(false);
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        console.log(`Upload progress: ${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`);
+      },
+      (error) => {
+        console.error("Upload failed", error);
+        setUploading(false);
+      },
+      async () => {
+        try {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          setFilePreviewUrl(url);
+          console.log("File available at:", url);
         
-    };
 
-    reader.readAsDataURL(fileToUpload); 
-};
-
-
-
-
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (!file) {
-      alert("No file selected!");
-      return;
-  }
-
-  setSelectedFile(file.name); 
-  setFileToUpload(file); 
-  handlePreview(file, file.name); 
-};
-
-  
-  
-  const fetchFilesFromRealtimeDatabase = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/get-files');
-      const data = await response.json();
-      setFiles(Object.values(data)); 
+          // Now push data to Firebase Realtime Database
+          const filesRef = dbRef(realtimeDb, "files");
+          await push(filesRef, {
+              name: file.name,
+              url: url,
+              uploadedAt: new Date().toISOString(),
+          });
+    
+      alert("File uploaded and saved successfully!");
+      
     } catch (error) {
-      console.error('Error fetching files:', error);
-    }
-  };
-  
-  const handlePreview = (file, fileName) => {
-    if (!fileName) {
-        console.error("Error: fileName is undefined or invalid");
-        return;
-    }
+      console.error("Error getting download URL or saving data:", error);
+  }
+  setUploading(false)
+}
 
-    console.log("Previewing file:", { fileName });
+);
 
-    setLoading(true);
-    const fileExtension = fileName.split(".").pop().toLowerCase();
+};
+const handleFileSelect = (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    alert("No file selected!");
+    return;
+}
 
-    if (fileExtension === "pdf") {
-        const blob = new Blob([file], { type: "application/pdf" });
-        const fileUrl = URL.createObjectURL(blob);
-        setFileType("pdf");
-        setFilePreviewUrl(fileUrl);
-    } else if (["jpg", "jpeg", "png", "gif"].includes(fileExtension)) {
-        const fileReader = new FileReader();
-        fileReader.onload = () => setFilePreviewUrl(fileReader.result);
-        fileReader.readAsDataURL(file);
-        setFileType("image");
-    } else if (fileExtension === "txt") {
-        const fileReader = new FileReader();
-        fileReader.onload = () => setFileContent(fileReader.result);
-        fileReader.readAsText(file);
-        setFileType("txt");
-    } else if (fileExtension === "docx") {
-        const fileReader = new FileReader();
-        fileReader.onload = async (event) => {
-            const arrayBuffer = event.target.result;
-            const result = await  mammoth.convertToHtml({ arrayBuffer });
-            setFileContent(result.value);
-        };
-        fileReader.readAsArrayBuffer(file);
-        setFileType("docx");
-    } else {
-        setFileType(null);
-        alert("Unsupported file type.");
-    }
-
-    setLoading(false);
+setFileToUpload(file);
+uploadFileToFirebase(file); 
 };
 
-
+  
   return (
     <div className="p-4">
       <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
@@ -165,7 +121,7 @@ const Usb = () => {
             <button
             onClick={() => {
               if (fileToUpload) {
-                uploadFileToCloudinary(fileToUpload);
+                
               } else {
                 alert('No file selected! Please choose a file first.');
               }
@@ -260,7 +216,7 @@ const Usb = () => {
         </div>
 
         {/* Right Side - File Preview */}
-        <DocumentPreview file={fileToUpload} />
+        <DocumentPreview fileUrl={filePreviewUrl} fileName={fileToUpload?.name} />
 
       </div>
 
