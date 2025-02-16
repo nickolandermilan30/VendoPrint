@@ -5,6 +5,7 @@ import Printer from "./Pages/Printer"; // Printer page
 import Xerox from "./Pages/Xerox"; // Xerox page
 import Settings from "./Pages/Admin"; // Settings page
 import Usb from "./Pages/Usb"; // USB page
+import Files from "./Pages/Files"; // Files page
 
 const App = () => {
   return (
@@ -18,7 +19,8 @@ const App = () => {
           <Route path="/printer" element={<Printer />} />
           <Route path="/xerox" element={<Xerox />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/usb" element={<Usb />} /> {/* New USB route */}
+          <Route path="/usb" element={<Usb />} />
+          <Route path="/files" element={<Files />} /> 
         </Route>
       </Routes>
     </Router>
