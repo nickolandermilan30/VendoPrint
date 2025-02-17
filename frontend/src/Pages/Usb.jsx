@@ -7,7 +7,7 @@ import SmartPriceToggle from "../components/smart_price";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { getDatabase, ref as dbRef, push } from "firebase/database";
 import { realtimeDb,storage } from "../../../backend/firebase/firebase-config";
-import mammoth from "mammoth";
+import PrinterList from "../components/printerList";
 const Usb = () => {
   const navigate = useNavigate();
   const [copies, setCopies] = useState(1);
@@ -35,6 +35,18 @@ const Usb = () => {
   const [files, setFiles] = useState([]);
 
  
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      alert("No file selected!");
+      return;
+  }
+  
+  setFileToUpload(file);
+  uploadFileToFirebase(file); 
+  };
+  
 
 // Upload file to Firebase Storage and save link to Realtime Database
   const uploadFileToFirebase = async (file) => {
@@ -111,20 +123,14 @@ const handlePrint = async () => {
 };
 
 
-const handleFileSelect = (event) => {
-  const file = event.target.files[0];
-  if (!file) {
-    alert("No file selected!");
-    return;
-}
-
-setFileToUpload(file);
-uploadFileToFirebase(file); 
-};
 
   
   return (
+
+    
+
     <div className="p-4">
+
       <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
         Kiosk Vendo Printer
       </h1>
@@ -223,6 +229,10 @@ uploadFileToFirebase(file);
                 <option>Black and White</option>
               </select>
             </div>
+             {/* List of available printer*/}
+              <div>
+                <PrinterList/>
+              </div>
 
             {/* Orientation Dropdown */}
             <div className="flex items-center mt-6 relative">
