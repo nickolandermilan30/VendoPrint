@@ -9,26 +9,33 @@
     "serve": "vite preview",
     "backend": "nodemon backend/server.js",
     "frontend": "npm run dev --prefix frontend",
-    "dev": "concurrently \"npm run frontend\" \"npm run backend\""
+    "electron": "electron .",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "cloudinary": "^2.5.1",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drivelist": "^12.0.2",
+    "electron": "^34.2.0",
+    "electron-print": "^1.0.2",
+    "electron-printer": "^0.0.5",
     "express": "^4.21.2",
     "firebase": "^11.3.1",
     "firebase-admin": "^13.0.2",
     "fs": "^0.0.1-security",
     "googleapis": "^144.0.0",
     "multer": "^1.4.5-lts.1",
-    "multer-storage-cloudinary": "^4.0.0"
+    "multer-storage-cloudinary": "^4.0.0",
+    "pdf-to-printer": "^5.6.0",
+    "printer": "^0.4.0"
   },
   "devDependencies": {
+    "grunt": "^0.4.5",
     "nodemon": "^3.1.9"
   }
 }
