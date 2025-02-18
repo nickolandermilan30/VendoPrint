@@ -18,8 +18,7 @@ const App = () => {
           <Route path="/printer" element={<Printer />} />
           <Route path="/xerox" element={<Xerox />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/usb" element={<Usb />} />
-          <Route path="/files" element={<Files />} /> 
+          <Route path="/usb" element={<Usb />} /> {/* New USB route */}
         </Route>
       </Routes>
     </Router>

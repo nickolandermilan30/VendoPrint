@@ -151,7 +151,7 @@ const Usb = () => {
           {/* Left Side - File Upload and Settings */}
           <div className="w-1/2 flex flex-col">
             <div className="flex items-center">
-              <button 
+              <button
                 className="w-10 h-10 bg-gray-200 text-[#31304D] flex items-center justify-center rounded-lg border-2 border-[#31304D] mr-4"
                 onClick={() => navigate(-1)}
               >
@@ -159,7 +159,7 @@ const Usb = () => {
               </button>
               <p className="text-3xl font-bold text-[#31304D]">USB</p>
             </div>
-        
+
             {/* Printer List */}
             <PrinterList
               selectedPrinter={selectedPrinter}
@@ -204,41 +204,14 @@ const Usb = () => {
                 setCalculatedPrice={setCalculatedPrice}
               />
             </div>
+          </div>
 
- 
-
-
-
-            {/* Color Dropdown */}
-            <div className="flex items-center mt-6 relative">
-              <p className="text-2xl font-bold text-[#31304D] mr-4">Color:</p>
-              <select
-                className="w-64 p-2 border-2 border-[#31304D] rounded-lg text-lg font-bold text-[#31304D]"
-                value={selectedColorOption}
-                onChange={(e) => setSelectedColorOption(e.target.value)}
-              >
-                <option>Color</option>
-                <option>Black and White</option>
-              </select>
-            </div>
-
-            {/* Orientation Dropdown */}
-            <div className="flex items-center mt-6 relative">
-              <p className="text-2xl font-bold text-[#31304D] mr-4">Orientation:</p>
-              <select
-                className="w-64 p-2 border-2 border-[#31304D] rounded-lg text-lg font-bold text-[#31304D]"
-                value={selectedOrientationOption}
-                onChange={(e) => setSelectedOrientationOption(e.target.value)}
-              >
-                <option>Portrait</option>
-                <option>Landscape</option>
-              </select>
-            </div>
-
-            {/* Smart Price Button */}
-            <div>
-            <SmartPriceToggle/>
-            </div>
+          {/* Right Side - File Preview */}
+          <div className="w-full">
+            <DocumentPreview
+              fileUrl={filePreviewUrl}
+              fileName={fileToUpload?.name}
+            />
           </div>
         </div>
 
