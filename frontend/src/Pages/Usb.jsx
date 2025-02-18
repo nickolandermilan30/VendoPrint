@@ -33,7 +33,7 @@ const Usb = () => {
   const [fileToUpload, setFileToUpload] = useState(null); 
   const [downloadURL, setDownloadURL] = useState("");
   const [files, setFiles] = useState([]);
-
+  const [selectedOption, setSelectedOption] = useState("");
  
 
 // Upload file to Firebase Storage and save link to Realtime Database
@@ -142,23 +142,28 @@ uploadFileToFirebase(file);
               <p className="text-3xl font-bold text-[#31304D]">USB</p>
             </div>
          
+         {/* include choose printer server */}
+<br />
+       <select
+        value={selectedOption}
+        onChange={(e) => setSelectedOption(e.target.value)}
+        className="w-full px-4 py-2 border-2 border-gray-600 rounded-sm"
+      >
+        <option value="">Select Printer</option>
+        <option value="option1">Option 1</option>
+        <option value="option2">Option 2</option>
+        <option value="option3">Option 3</option>
+      </select>
+
+
+
+
+
             <p className="mt-4 text-3xl font-bold text-[#31304D]">Choose File</p>
             <input type="file" onChange={handleFileSelect} className="mt-4 w-full border-2 border-[#31304D] p-2" />
             <div className="mt-4">
 
-            <button
-            onClick={() => {
-              if (fileToUpload) {
-                
-              } else {
-                alert('No file selected! Please choose a file first.');
-              }
-            }}
-            className="mt-4 w-full px-6 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg shadow-md"
-            disabled={uploading}
-          >
-            {uploading ? 'Uploading...' : 'Upload'}
-          </button>
+     
               </div>
           
             <div className="flex items-center mt-6">
