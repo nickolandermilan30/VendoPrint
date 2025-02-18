@@ -1,10 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import Layout from "./components/Layout"; // Layout with Sidebar
-import Printer from "./Pages/Printer"; // Printer page
-import Xerox from "./Pages/Xerox"; // Xerox page
-import Settings from "./Pages/Admin"; // Settings page
-import Usb from "./Pages/Usb"; // USB page
+import Layout from "./components/usb/Layout";
+import Printer from "./Pages/Printer"; 
+import Xerox from "./Pages/Xerox"; 
+import Settings from "./Pages/Admin"; 
+import Usb from "./Pages/Usb"; 
 
 const App = () => {
   return (
