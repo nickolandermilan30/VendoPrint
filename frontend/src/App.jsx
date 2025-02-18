@@ -6,6 +6,7 @@ import Xerox from "./Pages/Xerox";
 import Settings from "./Pages/Admin"; 
 import Usb from "./Pages/Usb"; 
 
+
 const App = () => {
   return (
     <Router>
