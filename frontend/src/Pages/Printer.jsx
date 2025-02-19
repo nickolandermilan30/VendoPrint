@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 
 import vectorImage4 from '../assets/Icons/Vector 4.png'; 
+import M_Qrcode from './M_Qrcode';
 
 const Printer = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="p-4 flex flex-col lg:flex-row items-center lg:items-start h-full min-h-screen">
       {/* Left Side: Title & Grid Layout */}
@@ -46,7 +49,10 @@ const Printer = () => {
           </Link>
 
           {/* Share files via QR Box */}
-          <div className="flex flex-col items-center">
+          <div 
+            className="flex flex-col items-center cursor-pointer"
+            onClick={() => setIsModalOpen(true)}
+          >
             <div className="w-full max-w-xs h-48 bg-gray-100 flex items-center justify-center text-xl font-bold rounded-lg border-4 border-[#31304D] shadow-md">
               <img src={vectorImage4} alt="Share files via QR" className="w-24 h-24" />
             </div>
@@ -60,6 +66,25 @@ const Printer = () => {
         <h2 className="text-xl font-bold">Printer Queue</h2>
         <div className="flex-1 flex items-center justify-center w-full"></div>
       </div>
+
+{/* Modal */}
+{isModalOpen && (
+  <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col items-center">
+      <h2 className="text-2xl font-bold mb-4 text-center">Share files via QR</h2>
+      <M_Qrcode />
+      
+      {/* Centered and Wider Close Button */}
+      <button 
+        className="mt-6 bg-red-500 text-white px-6 py-3 rounded-lg w-3/4 text-center font-bold"
+        onClick={() => setIsModalOpen(false)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
