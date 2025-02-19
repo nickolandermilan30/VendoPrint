@@ -25,8 +25,8 @@ const CustomPage = ({
           onChange={(e) => handlePageSelectionChange(e.target.value)}
         >
           <option value="All">All</option>
-          <option value="Odd pages only">Odd pages only</option>
-          <option value="Even pages only">Even pages only</option>
+          <option value="Odd">Odd pages only</option>
+          <option value="Even">Even pages only</option>
           <option value="Custom">Custom</option>
         </select>
       </div>

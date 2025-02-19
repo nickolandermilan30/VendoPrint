@@ -15,6 +15,9 @@ import { getDatabase, ref as dbRef, push } from "firebase/database";
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
+import { PDFDocument } from "pdf-lib";
+import mammoth from 'mammoth';
+
 
 const Usb = () => {
   const navigate = useNavigate();
@@ -31,9 +34,8 @@ const Usb = () => {
   const [orientation, setOrientation] = useState("Portrait");
   const [selectedPageOption, setSelectedPageOption] = useState("All");
   const [customPageRange, setCustomPageRange] = useState("");
+  
   const [totalPages, setTotalPages] = useState(1); 
-
-
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
 
@@ -45,6 +47,36 @@ const Usb = () => {
       return;
     }
     setFileToUpload(file);
+
+    if (file.type === "application/pdf") {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const pdfData = new Uint8Array(e.target.result);
+        const pdfDoc = await PDFDocument.load(pdfData);
+        const totalPageCount = pdfDoc.getPageCount();
+        setTotalPages(totalPageCount); // Set total pages
+      };
+      reader.readAsArrayBuffer(file);
+    }else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      // Handle .docx file
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const arrayBuffer = e.target.result;
+        try {
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          const textLength = result.value.length;
+          // Estimate page count based on text length
+          const estimatedPages = Math.ceil(textLength / 1000); // Adjust as necessary
+          setTotalPages(estimatedPages);
+        } catch (error) {
+          console.error("Error reading docx file:", error);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      setTotalPages(1); // Default to 1 if not a PDF
+    }
+
     uploadFileToFirebase(file);
   };
 
@@ -115,7 +147,7 @@ const Usb = () => {
 
   
       try {
-        const response = await axios.post("http://localhost:5000/api/print", {
+        const response = await axios.post("http://localhost:5173/api/print", {
           printerName: selectedPrinter,
           fileUrl: filePreviewUrl,
           copies: copies,
