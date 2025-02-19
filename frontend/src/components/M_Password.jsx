@@ -9,7 +9,7 @@ const M_Password = ({ closeModal }) => {
   const handleSubmit = () => {
     if (password === 'admin123') {
       closeModal();
-      navigate('/settings'); // Redirect to Admin page
+      navigate('/settings'); 
     } else {
       setError('Incorrect password');
     }
