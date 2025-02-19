@@ -8,7 +8,7 @@ const PrinterList = ({ selectedPrinter, setSelectedPrinter }) => {
   // Fetch printers from backend on component mount
   useEffect(() => {
     axios
-      .get("http://localhost:5173/api/printers")
+      .get("http://localhost:5000/api/printers")
       .then((response) => {
         setPrinters(response.data.printers);
       })
