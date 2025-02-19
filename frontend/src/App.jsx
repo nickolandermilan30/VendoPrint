@@ -19,7 +19,7 @@ const App = () => {
           <Route path="/xerox" element={<Xerox />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/usb" element={<Usb />} />
-          <Route path="/files" element={<Files />} /> 
+          {/* <Route path="/files" element={<Files />} />  */}
         </Route>
       </Routes>
     </Router>
