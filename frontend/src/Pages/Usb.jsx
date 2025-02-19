@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint } from "react-icons/fa";
-import M_small_price from "./M_small_price";
-import DocumentPreview from "../components/document_preview";
-import SmartPriceToggle from "../components/smart_price";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
+import CustomPage from "../components/usb/customized_page";
+import DocumentPreview from "../components/usb/document_preview";
+import SmartPriceToggle from "../components/usb/smart_price";
+import PrinterList from "../components/usb/printerList";
+import PageOrientation from "../components/usb/page_orientation";
+import SelectColor from "../components/usb/select_color";
+import PageSize from "../components/usb/page_size";
+import Copies from "../components/usb/copies";
+
 import { getDatabase, ref as dbRef, push } from "firebase/database";
 import { realtimeDb,storage } from "../../../backend/firebase/firebase-config";
 import PrinterList from "../components/printerList";
@@ -41,14 +47,12 @@ const Usb = () => {
     if (!file) {
       alert("No file selected!");
       return;
-  }
-  
-  setFileToUpload(file);
-  uploadFileToFirebase(file); 
+    }
+    setFileToUpload(file);
+    uploadFileToFirebase(file);
   };
-  
 
-// Upload file to Firebase Storage and save link to Realtime Database
+  // Upload file to Firebase Storage
   const uploadFileToFirebase = async (file) => {
     if (!file) {
         alert("No file selected for upload!");
