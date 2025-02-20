@@ -9,7 +9,9 @@ const SmartPriceToggle = ({
   isSmartPriceEnabled,
   setIsSmartPriceEnabled,
   calculatedPrice,
-  setCalculatedPrice
+  setCalculatedPrice,
+  selectedPageOption,
+  customPageRange
 }) => {
   const [error, setError] = useState(null);
 
@@ -20,7 +22,9 @@ const SmartPriceToggle = ({
         paperSize,
         isColor,
         copies,
-        totalPages
+        totalPages,
+        selectedPageOption,
+        customPageRange
       });
 
       if (response.data.success) {

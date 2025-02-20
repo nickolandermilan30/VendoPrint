@@ -39,6 +39,7 @@ const Usb = () => {
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
 
+
   // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -55,6 +56,7 @@ const Usb = () => {
         const pdfDoc = await PDFDocument.load(pdfData);
         const totalPageCount = pdfDoc.getPageCount();
         setTotalPages(totalPageCount); // Set total pages
+        updateSelectedPageCount(totalPageCount, selectedOption, customPages);
       };
       reader.readAsArrayBuffer(file);
     }else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
@@ -147,7 +149,7 @@ const Usb = () => {
 
   
       try {
-        const response = await axios.post("http://localhost:5173/api/print", {
+        const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
           fileUrl: filePreviewUrl,
           copies: copies,
@@ -218,6 +220,7 @@ const Usb = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
+                totalPages = {totalPages}
               />
               <SelectColor isColor={isColor} setIsColor={setIsColor} />
               <PageOrientation
@@ -230,10 +233,16 @@ const Usb = () => {
                 isColor={isColor}
                 copies={copies}
                 totalPages={totalPages}
+                setTotalPages={setTotalPages}
                 isSmartPriceEnabled={isSmartPriceEnabled}
                 setIsSmartPriceEnabled={setIsSmartPriceEnabled}
                 calculatedPrice={calculatedPrice}
                 setCalculatedPrice={setCalculatedPrice}
+                selectedPageOption={selectedPageOption}
+                setSelectedPageOption={setSelectedPageOption}
+                customPageRange={customPageRange}
+                setCustomPageRange={setCustomPageRange}
+                
               />
             </div>
           </div>

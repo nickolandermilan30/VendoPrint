@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import { exec } from "child_process";
+import axios from "axios";
+
 
 const { getPrinters, print } = pdfToPrinter; 
 
