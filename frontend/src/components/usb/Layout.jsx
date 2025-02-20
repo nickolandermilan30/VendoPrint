@@ -1,13 +1,13 @@
 import React from "react";
-import Sidebar from "../Pages/Home"; // Import the Sidebar
+import Sidebar from "../../Pages/Home"; 
 import { Outlet } from "react-router-dom";
 
 const Layout = () => {
   return (
     <div className="flex">
-      <Sidebar /> {/* Sidebar always visible */}
+      <Sidebar /> 
       <div className="flex-1 p-4">
-        <Outlet /> {/* This will load Printer, Xerox, or Settings dynamically */}
+        <Outlet /> 
       </div>
     </div>
   );
