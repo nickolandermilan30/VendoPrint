@@ -10,14 +10,14 @@ const CustomPage = ({
   const handlePageSelectionChange = (option) => {
     setSelectedPageOption(option);
     if (option !== "Custom") {
-      // Kapag hindi "Custom", i-reset ang custom range.
+
       setCustomPageRange("");
     }
   };
 
   return (
     <div className="flex flex-col space-y-4 mt-6">
-      {/* Page Selection Dropdown */}
+
       <div className="flex items-center space-x-4">
         <p className="text-2xl font-bold text-[#31304D]">Pages:</p>
         <select
@@ -34,7 +34,6 @@ const CustomPage = ({
         </select>
       </div>
 
-      {/* Custom Page Input (Only visible when "Custom" is selected) */}
       {selectedPageOption === "Custom" && (
         <div className="flex flex-col space-y-2">
           <p className="text-lg font-bold text-[#31304D]">

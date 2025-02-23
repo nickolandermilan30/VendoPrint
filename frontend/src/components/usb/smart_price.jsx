@@ -39,15 +39,12 @@ console.log("Custom Pages:", customPages);
 
  pagesToPrint = customPages.length;
  } else if (selectedPageOption === "All") {
-      // If "All", we print all pages
+ 
  pagesToPrint = totalPages;
 }
 
-   // Final price calculation
-  const totalCost = pricePerPage * copies * pagesToPrint;
 
-  //console.log("Pages to Print:", pagesToPrint);
-  //console.log("Final Price:", totalCost);
+  const totalCost = pricePerPage * copies * pagesToPrint;
 
   
 

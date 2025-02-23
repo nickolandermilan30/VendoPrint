@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 const PageSize = ({ selectedSize, setSelectedSize }) => {
-  // If you have custom width/height logic, you can track them here or pass them from parent as well.
+
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
 
@@ -39,7 +39,7 @@ const PageSize = ({ selectedSize, setSelectedSize }) => {
               value={customWidth}
               onChange={(e) => {
                 setCustomWidth(e.target.value);
-                // Handle how you store the custom size in parent if needed
+               
               }}
               className="w-32 p-2 border-2 border-[#31304D] rounded-lg text-lg font-bold text-[#31304D]"
               placeholder="Width"
@@ -53,7 +53,7 @@ const PageSize = ({ selectedSize, setSelectedSize }) => {
               value={customHeight}
               onChange={(e) => {
                 setCustomHeight(e.target.value);
-                // Handle how you store the custom size in parent if needed
+
               }}
               className="w-32 p-2 border-2 border-[#31304D] rounded-lg text-lg font-bold text-[#31304D]"
               placeholder="Height"

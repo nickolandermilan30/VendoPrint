@@ -15,10 +15,10 @@ const DocumentPreview = ({ fileUrl, fileName }) => {
         {fileName || "Document Preview"}
       </h2>
 
-      {/* Container ng mismong document preview */}
+
       <div className="w-full h-full overflow-y-auto flex justify-center rounded-lg shadow-md p-4">
 
-        {/* 1) Mga Image Files */}
+
         {["jpg", "jpeg", "png", "gif"].includes(fileExtension) && (
           <img
             src={fileUrl}
@@ -27,7 +27,7 @@ const DocumentPreview = ({ fileUrl, fileName }) => {
           />
         )}
 
-        {/* 2) Iframe for PDF & Office Files (Google Docs Viewer) */}
+     
         {["pdf", "docx", "xlsx", "pptx", "doc", "xls", "ppt"].includes(
           fileExtension
         ) && (
