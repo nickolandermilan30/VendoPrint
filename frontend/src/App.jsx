@@ -11,10 +11,8 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Redirect root path "/" to "/printer" */}
+   
         <Route path="/" element={<Navigate to="/printer" replace />} />
-
-        {/* Wrap all routes in Layout for consistent sidebar */}
         <Route path="/" element={<Layout />}>
           <Route path="/printer" element={<Printer />} />
           <Route path="/xerox" element={<Xerox />} />
