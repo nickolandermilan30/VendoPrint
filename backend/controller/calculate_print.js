@@ -44,7 +44,6 @@ export const calculatePrintPrice = (req, res) => {
 
     // Final price calculation
     const finalPrice = basePrice * copies * pagesToPrint;
-
     console.log("Pages to Print:", pagesToPrint);
     console.log("Final Price:", finalPrice);
 

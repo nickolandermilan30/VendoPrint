@@ -39,7 +39,7 @@ const Usb = () => {
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
 
-
+  
   // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -56,7 +56,7 @@ const Usb = () => {
         const pdfDoc = await PDFDocument.load(pdfData);
         const totalPageCount = pdfDoc.getPageCount();
         setTotalPages(totalPageCount); // Set total pages
-        updateSelectedPageCount(totalPageCount, selectedOption, customPages);
+
       };
       reader.readAsArrayBuffer(file);
     }else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
@@ -221,6 +221,7 @@ const Usb = () => {
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
                 totalPages = {totalPages}
+                
               />
               <SelectColor isColor={isColor} setIsColor={setIsColor} />
               <PageOrientation
@@ -252,6 +253,8 @@ const Usb = () => {
             <DocumentPreview
               fileUrl={filePreviewUrl}
               fileName={fileToUpload?.name}
+              selectedPageOption={selectedPageOption}
+              customPageRange={customPageRange}
             />
           </div>
         </div>

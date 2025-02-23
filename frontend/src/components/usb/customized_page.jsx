@@ -5,11 +5,12 @@ const CustomPage = ({
   setSelectedPageOption,
   customPageRange,
   setCustomPageRange,
+  totalPages
 }) => {
   const handlePageSelectionChange = (option) => {
     setSelectedPageOption(option);
     if (option !== "Custom") {
-      // If user picks "All", "Odd pages only", "Even pages only", reset custom range
+      // Kapag hindi "Custom", i-reset ang custom range.
       setCustomPageRange("");
     }
   };
@@ -24,7 +25,9 @@ const CustomPage = ({
           value={selectedPageOption}
           onChange={(e) => handlePageSelectionChange(e.target.value)}
         >
-          <option value="All">All</option>
+    <option value="All">
+            {totalPages > 1 ? `Pages ${totalPages}` : "All"}
+          </option>
           <option value="Odd">Odd pages only</option>
           <option value="Even">Even pages only</option>
           <option value="Custom">Custom</option>
@@ -34,7 +37,9 @@ const CustomPage = ({
       {/* Custom Page Input (Only visible when "Custom" is selected) */}
       {selectedPageOption === "Custom" && (
         <div className="flex flex-col space-y-2">
-          <p className="text-lg font-bold text-[#31304D]">Enter Page Numbers:</p>
+          <p className="text-lg font-bold text-[#31304D]">
+            Enter Page Numbers:
+          </p>
           <input
             type="text"
             className="w-64 p-2 border-2 border-[#31304D] rounded-lg text-lg font-bold text-[#31304D]"
