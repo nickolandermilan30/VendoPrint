@@ -3,7 +3,7 @@ import { addData, getData, uploadFile } from "../controller/firebase_controller.
 import UsbList from "../controller/usd_drives_controller.js";
 import upload from "../cloudinarry/multer_cloudinarry.js";
 import { fetchPrinters, printFile } from "../printer/printer_controller.js";
-import { calculatePrintPrice } from "../controller/calculate_print.js";
+
 
 const BackendRoutes = express.Router();
 // Firebase Route
@@ -13,8 +13,6 @@ BackendRoutes.post("/upload", upload.single("file"), uploadFile);
 //Printer
 BackendRoutes.get("/printers", fetchPrinters);
 BackendRoutes.post("/print", printFile);
-//SmartPrice
-BackendRoutes.post("/calculate-price", calculatePrintPrice); 
 //USB Drive
 BackendRoutes.get("/usb-files", UsbList);
 export default BackendRoutes;

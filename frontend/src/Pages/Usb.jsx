@@ -11,13 +11,14 @@ import SelectColor from "../components/usb/select_color";
 import PageSize from "../components/usb/page_size";
 import Copies from "../components/usb/copies";
 
-import { getDatabase, ref as dbRef, push } from "firebase/database";
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
+import { getDatabase, ref as dbRef, push } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
-import mammoth from 'mammoth';
+import mammoth from "mammoth";
 
+import { getPageIndicesToPrint } from "../utils/pageRanges"; // <-- Import your utility
 
 const Usb = () => {
   const navigate = useNavigate();
@@ -34,13 +35,11 @@ const Usb = () => {
   const [orientation, setOrientation] = useState("Portrait");
   const [selectedPageOption, setSelectedPageOption] = useState("All");
   const [customPageRange, setCustomPageRange] = useState("");
-  
-  const [totalPages, setTotalPages] = useState(1); 
+  const [totalPages, setTotalPages] = useState(1);
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
 
-  
-  // Handle file selection
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (!file) {
@@ -49,26 +48,29 @@ const Usb = () => {
     }
     setFileToUpload(file);
 
+
     if (file.type === "application/pdf") {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const pdfData = new Uint8Array(e.target.result);
         const pdfDoc = await PDFDocument.load(pdfData);
         const totalPageCount = pdfDoc.getPageCount();
-        setTotalPages(totalPageCount); // Set total pages
-
+        setTotalPages(totalPageCount);
       };
       reader.readAsArrayBuffer(file);
-    }else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-      // Handle .docx file
+    } 
+
+    else if (
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const arrayBuffer = e.target.result;
         try {
           const result = await mammoth.extractRawText({ arrayBuffer });
           const textLength = result.value.length;
-          // Estimate page count based on text length
-          const estimatedPages = Math.ceil(textLength / 1000); // Adjust as necessary
+          
+          const estimatedPages = Math.ceil(textLength / 1000);
           setTotalPages(estimatedPages);
         } catch (error) {
           console.error("Error reading docx file:", error);
@@ -76,19 +78,19 @@ const Usb = () => {
       };
       reader.readAsArrayBuffer(file);
     } else {
-      setTotalPages(1); // Default to 1 if not a PDF
+
+      setTotalPages(1);
     }
 
     uploadFileToFirebase(file);
   };
 
-  // Upload file to Firebase Storage
+
   const uploadFileToFirebase = async (file) => {
     if (!file) {
       alert("No file selected for upload!");
       return;
     }
-
     const storageRef = ref(storage, `uploads/${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -117,7 +119,6 @@ const Usb = () => {
     );
   };
 
-  // Handle "Print" button
   const handlePrint = async () => {
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
@@ -128,12 +129,66 @@ const Usb = () => {
       return;
     }
 
-    // 1) Save data to Firebase (realtimeDb)
+    let finalFileUrlToPrint = filePreviewUrl;
+
     try {
+
+      if (fileToUpload?.type === "application/pdf") {
+
+        const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
+          res.arrayBuffer()
+        );
+
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+   
+        const indicesToKeep = getPageIndicesToPrint({
+          totalPages,
+          selectedPageOption,
+          customPageRange,
+        });
+
+        if (indicesToKeep.length === 0) {
+          alert("No pages selected based on your page option!");
+          return;
+        }
+
+        const newPdfDoc = await PDFDocument.create();
+        const copiedPages = await newPdfDoc.copyPages(pdfDoc, indicesToKeep);
+
+    
+        copiedPages.forEach((page) => {
+          newPdfDoc.addPage(page);
+        });
+
+ 
+        const newPdfBytes = await newPdfDoc.save();
+
+        const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
+
+
+        const timeStamp = Date.now();
+        const newPdfName = `partial-pages-${timeStamp}.pdf`;
+        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
+
+        await uploadBytesResumable(storageRef2, newPdfBlob);
+
+        const newUrl = await getDownloadURL(storageRef2);
+        finalFileUrlToPrint = newUrl
+      } 
+
+      else {
+      
+        if (selectedPageOption !== "All") {
+          alert("Partial page selection is only supported for PDF right now.");
+        }
+      }
+
+ 
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
-        fileUrl: filePreviewUrl,
+        fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -147,11 +202,11 @@ const Usb = () => {
         timestamp: new Date().toISOString(),
       });
 
-  
+
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
-          fileUrl: filePreviewUrl,
+          fileUrl: finalFileUrlToPrint,
           copies: copies,
         });
 
@@ -164,11 +219,9 @@ const Usb = () => {
         console.error("Print job error:", err);
       }
 
-      // 3) Optionally print from the browser (window.print):
-      // window.print();
     } catch (error) {
-      console.error("Error inserting print job data:", error);
-      alert("Failed to add print job. Please try again.");
+      console.error("Error preparing the print job:", error);
+      alert("Failed to prepare print job. Please try again.");
     }
   };
 
@@ -180,9 +233,10 @@ const Usb = () => {
 
       {/* Main Box Container */}
       <div className="flex flex-col w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4 relative">
-        {/* Top Section (Left and Right Side) */}
+
+        {/* Top Section */}
         <div className="flex w-full space-x-6">
-          {/* Left Side - File Upload and Settings */}
+          {/* Left Side */}
           <div className="w-1/2 flex flex-col">
             <div className="flex items-center">
               <button
@@ -220,8 +274,7 @@ const Usb = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
-                totalPages = {totalPages}
-                
+                totalPages={totalPages}
               />
               <SelectColor isColor={isColor} setIsColor={setIsColor} />
               <PageOrientation
@@ -243,7 +296,6 @@ const Usb = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
-                
               />
             </div>
           </div>
@@ -253,8 +305,6 @@ const Usb = () => {
             <DocumentPreview
               fileUrl={filePreviewUrl}
               fileName={fileToUpload?.name}
-              selectedPageOption={selectedPageOption}
-              customPageRange={customPageRange}
             />
           </div>
         </div>
