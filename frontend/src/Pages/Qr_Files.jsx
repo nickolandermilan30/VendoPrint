@@ -245,7 +245,7 @@ const QRUpload = () => {
               >
                 <FaArrowLeft className="text-2xl text-[#31304D]" />
               </button>
-              <p className="text-3xl font-bold text-[#31304D]">USB</p>
+              <p className="text-3xl font-bold text-[#31304D]">Upload Your Files</p>
             </div>
 
             {/* Printer List */}

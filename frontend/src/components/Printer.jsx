@@ -67,23 +67,23 @@ const Printer = () => {
         <div className="flex-1 flex items-center justify-center w-full"></div>
       </div>
 
-{/* Modal */}
-{isModalOpen && (
-  <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col items-center">
-      <h2 className="text-2xl font-bold mb-4 text-center">Share files via QR</h2>
-      <M_Qrcode />
-      
-      {/* Centered and Wider Close Button */}
-      <button 
-        className="mt-6 bg-red-500 text-white px-6 py-3 rounded-lg w-3/4 text-center font-bold"
-        onClick={() => setIsModalOpen(false)}
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col items-center">
+            <h2 className="text-2xl font-bold mb-4 text-center">Share files via QR</h2>
+            <M_Qrcode />
+            
+            {/* Centered and Wider Close Button */}
+            <button 
+              className="mt-6 bg-red-500 text-white px-6 py-3 rounded-lg w-3/4 text-center font-bold"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
