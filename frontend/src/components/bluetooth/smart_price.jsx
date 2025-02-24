@@ -7,13 +7,11 @@ function SmartPriceLabel({
   calculatedPrice,
   setCalculatedPrice,
   customPageRange,
-  selectedPageOption,
-  filePreviewUrl
+  selectedPageOption
 }) {
-
   useEffect(() => {
 
-    const pricePerPage = isColor ? 14.75 : 7.75;
+    const pricePerPage = isColor ? 7.75 : 14.75;
     const oddPagesCount = Math.ceil(totalPages / 2);  
     const evenPagesCount = Math.floor(totalPages / 2);
 
@@ -41,20 +39,18 @@ console.log("Custom Pages:", customPages);
 
  pagesToPrint = customPages.length;
  } else if (selectedPageOption === "All") {
- 
+
  pagesToPrint = totalPages;
 }
 
-
-if (!filePreviewUrl){
-  const totalCost = 0;
-    setCalculatedPrice(totalCost);
-}else{
+ 
   const totalCost = pricePerPage * copies * pagesToPrint;
-  setCalculatedPrice(totalCost);}
+
 
   
-  }, [isColor, copies, totalPages, setCalculatedPrice,customPageRange, selectedPageOption,filePreviewUrl]);
+
+    setCalculatedPrice(totalCost);
+  }, [isColor, copies, totalPages, setCalculatedPrice,customPageRange, selectedPageOption]);
 
   return (
     <div className="mt-8 flex items-center space-x-4 w-full">

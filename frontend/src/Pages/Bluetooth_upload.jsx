@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPrint} from "react-icons/fa";
+import { FaArrowLeft, FaPrint } from "react-icons/fa";
 
-import CustomPage from "../components/usb/customized_page";
-import DocumentPreview from "../components/usb/document_preview";
-import SmartPriceToggle from "../components/usb/smart_price";
-import PrinterList from "../components/usb/printerList";
-import PageOrientation from "../components/usb/page_orientation";
-import SelectColor from "../components/usb/select_color";
-import PageSize from "../components/usb/page_size";
-import Copies from "../components/usb/copies";
+import CustomPage from "../components/bluetooth/customized_page";
+import DocumentPreview from "../components/bluetooth/document_preview";
+import SmartPriceToggle from "../components/bluetooth/smart_price";
+import PrinterList from "../components/bluetooth/printerList";
+import PageOrientation from "../components/bluetooth/page_orientation";
+import SelectColor from "../components/bluetooth/select_color";
+import PageSize from "../components/bluetooth/page_size";
+import Copies from "../components/bluetooth/copies";
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
 import { getDatabase, ref as dbRef, push } from "firebase/database";
@@ -18,16 +18,27 @@ import axios from "axios";
 import { PDFDocument } from "pdf-lib";
 import mammoth from "mammoth";
 
-import { getPageIndicesToPrint } from "../utils/pageRanges"; // <-- Import your utility
+import { getPageIndicesToPrint } from "../utils/pageRanges";
 
-const Usb = () => {
+const BTUpload = () => {
   const navigate = useNavigate();
 
-  // File states
+  // ----------------------------
+  // 1) Bluetooth states
+  // ----------------------------
+  const [isBluetoothSupported, setIsBluetoothSupported] = useState(true);
+  const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
+  const [bluetoothDevice, setBluetoothDevice] = useState(null);
+
+  // ----------------------------
+  // 2) File states
+  // ----------------------------
   const [filePreviewUrl, setFilePreviewUrl] = useState("");
   const [fileToUpload, setFileToUpload] = useState(null);
 
-  // Print settings states
+  // ----------------------------
+  // 3) Print settings states
+  // ----------------------------
   const [selectedPrinter, setSelectedPrinter] = useState("");
   const [copies, setCopies] = useState(1);
   const [selectedSize, setSelectedSize] = useState("Letter 8.5 x 11");
@@ -38,9 +49,45 @@ const Usb = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
-  const [status , setStatus] = useState("pending");
   const [isLoading, setIsLoading] = useState(false);
 
+  // ----------------------------
+  // Check if Bluetooth is supported by the browser
+  // ----------------------------
+  useEffect(() => {
+    if (!("bluetooth" in navigator)) {
+      setIsBluetoothSupported(false);
+    }
+  }, []);
+
+  // ----------------------------
+  // 4) Bluetooth connect logic
+  // ----------------------------
+  const handleBluetoothConnect = async () => {
+    if (!isBluetoothSupported) return;
+
+    try {
+   
+
+    
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ["battery_service"] }],
+      });
+
+      setBluetoothDevice(device);
+      setIsBluetoothConnected(true);
+      alert(`Connected to Bluetooth device: ${device.name}`);
+      
+
+    } catch (error) {
+      console.error("User canceled or failed to connect:", error);
+      alert("Failed to connect to Bluetooth device.");
+    }
+  };
+
+  // ----------------------------
+  // 5) File Upload Handling
+  // ----------------------------
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (!file) {
@@ -59,10 +106,9 @@ const Usb = () => {
         setTotalPages(totalPageCount);
       };
       reader.readAsArrayBuffer(file);
-    } 
-
-    else if (
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    } else if (
+      file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -70,7 +116,7 @@ const Usb = () => {
         try {
           const result = await mammoth.extractRawText({ arrayBuffer });
           const textLength = result.value.length;
-          
+
           const estimatedPages = Math.ceil(textLength / 1000);
           setTotalPages(estimatedPages);
         } catch (error) {
@@ -83,9 +129,9 @@ const Usb = () => {
       setTotalPages(1);
     }
 
+    // Actually upload to Firebase
     uploadFileToFirebase(file);
   };
-
 
   const uploadFileToFirebase = async (file) => {
     if (!file) {
@@ -120,12 +166,16 @@ const Usb = () => {
     );
   };
 
+  // ----------------------------
+  // 6) Print Handler
+  // ----------------------------
   const handlePrint = async () => {
     setIsLoading(true); 
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
     }
+
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
       return;
@@ -134,16 +184,13 @@ const Usb = () => {
     let finalFileUrlToPrint = filePreviewUrl;
 
     try {
-
+      // PDF partial page logic
       if (fileToUpload?.type === "application/pdf") {
-
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
         );
-
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-   
         const indicesToKeep = getPageIndicesToPrint({
           totalPages,
           selectedPageOption,
@@ -158,39 +205,33 @@ const Usb = () => {
         const newPdfDoc = await PDFDocument.create();
         const copiedPages = await newPdfDoc.copyPages(pdfDoc, indicesToKeep);
 
-    
         copiedPages.forEach((page) => {
           newPdfDoc.addPage(page);
         });
 
- 
         const newPdfBytes = await newPdfDoc.save();
-
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
 
-
+        // Upload partial PDF to Firebase
         const timeStamp = Date.now();
         const newPdfName = `partial-pages-${timeStamp}.pdf`;
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-
         await uploadBytesResumable(storageRef2, newPdfBlob);
-
         const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl
-      } 
+        finalFileUrlToPrint = newUrl;
 
-      else {
-      
+      } else {
+        // Non-PDF partial logic (docx, images, etc.)
         if (selectedPageOption !== "All") {
           alert("Partial page selection is only supported for PDF right now.");
         }
       }
 
- 
+      // Save print job details in Realtime Database
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
-        fileUrl: finalFileUrlToPrint, 
+        fileUrl: finalFileUrlToPrint,
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -202,10 +243,9 @@ const Usb = () => {
         isSmartPriceEnabled: isSmartPriceEnabled,
         finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
         timestamp: new Date().toISOString(),
-        status: status
       });
 
-
+      // Example call to your local print server
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
@@ -226,19 +266,64 @@ const Usb = () => {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
     } finally{
-      setIsLoading(false);
-    }
+        setIsLoading(false);
+      }
   };
 
+  // ----------------------------
+  // 7) Conditional Rendering
+  // ----------------------------
+  // If Bluetooth not supported
+  if (!isBluetoothSupported) {
+    return (
+      <div className="p-4">
+        <button
+          className="w-10 h-10 bg-gray-200 text-[#31304D] flex items-center justify-center rounded-lg border-2 border-[#31304D] mr-4 mb-4"
+          onClick={() => navigate(-1)}
+        >
+          <FaArrowLeft className="text-2xl text-[#31304D]" />
+        </button>
+        <h2 className="text-3xl font-bold text-red-600">
+          Bluetooth is not supported on this browser.
+        </h2>
+      </div>
+    );
+  }
+
+  // If Bluetooth is supported, but not yet connected
+  if (!isBluetoothConnected) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center">
+        <button
+          className="w-10 h-10 bg-gray-200 text-[#31304D] flex items-center justify-center rounded-lg border-2 border-[#31304D] mr-4 self-start"
+          onClick={() => navigate(-1)}
+        >
+          <FaArrowLeft className="text-2xl text-[#31304D]" />
+        </button>
+        <div className="mt-10 flex flex-col border px-13 py-13 rounded-2xl items-center">
+          <h2 className="text-3xl font-bold text-[#31304D] mb-6">
+            Connect a Bluetooth Device
+          </h2>
+          <button
+            onClick={handleBluetoothConnect}
+            className="px-6 py-3 bg-gray-600 text-white text-xl font-bold rounded-lg"
+          >
+            Connect via Bluetooth
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If connected, show the regular upload + print UI
   return (
     <div className="p-4">
       <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
-        Kiosk Vendo Printer
+        Kiosk Vendo Printer (Bluetooth Connected)
       </h1>
 
       {/* Main Box Container */}
       <div className="flex flex-col w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4 relative">
-
         {/* Top Section */}
         <div className="flex w-full space-x-6">
           {/* Left Side */}
@@ -250,7 +335,9 @@ const Usb = () => {
               >
                 <FaArrowLeft className="text-2xl text-[#31304D]" />
               </button>
-              <p className="text-3xl font-bold text-[#31304D]">USB</p>
+              <p className="text-3xl font-bold text-[#31304D]">
+                Upload Your Files
+              </p>
             </div>
 
             {/* Printer List */}
@@ -301,7 +388,6 @@ const Usb = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
-                filePreviewUrl = {filePreviewUrl}
               />
             </div>
           </div>
@@ -315,28 +401,18 @@ const Usb = () => {
           </div>
         </div>
 
-     {/* Bottom Section (Print Button) */}
-     <div className="flex flex-col items-center mt-auto pt-6">
-          {isLoading ? (
-            <button
-              disabled
-              className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
-            >
-              <i className="fa fa-spinner fa-spin mr-2"></i>
-              Printing...
-            </button>
-          ) : (
-            <button
-              onClick={handlePrint}
-              className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
-            >
-              Print <FaPrint className="ml-2 text-white" />
-            </button>
-          )}
+
+        <div className="flex flex-col items-center mt-auto pt-6">
+          <button
+            onClick={handlePrint}
+            className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+          >
+            Print <FaPrint className="ml-2 text-white" />
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default Usb;
+export default BTUpload;
