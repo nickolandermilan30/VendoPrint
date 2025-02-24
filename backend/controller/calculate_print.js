@@ -2,8 +2,8 @@
 //   try {
 //     const { isColor, copies, totalPages, selectedPageOption, customPageRange } = req.body;
 
-//     // Base price per page
-//     const basePrice = isColor ? 14.50 : 6.75;
+    // Base price for single copy
+    const basePrice = isColor ? 14.50 : 6.75;
 
 //     // Calculate number of odd and even pages
 //     const oddPagesCount = Math.ceil(totalPages / 2);  // Odd pages: 1, 3, 5...

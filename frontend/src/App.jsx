@@ -5,7 +5,6 @@ import Printer from "./components/Printer";
 import Xerox from "./Pages/Xerox"; 
 import Settings from "./Pages/Admin"; 
 import Usb from "./Pages/Usb"; 
-import QRUpload from "./Pages/Qr_Files";
 
 const App = () => {
   return (
@@ -17,8 +16,8 @@ const App = () => {
           <Route path="/printer" element={<Printer />} />
           <Route path="/xerox" element={<Xerox />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/usb" element={<Usb />} /> 
-          <Route path ="/qr-upload" element = {<QRUpload />} />
+          <Route path="/usb" element={<Usb />} />
+          {/* <Route path="/files" element={<Files />} />  */}
         </Route>
       </Routes>
     </Router>
