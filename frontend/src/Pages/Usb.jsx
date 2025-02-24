@@ -38,6 +38,7 @@ const Usb = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
+  const [status , setStatus] = useState("pending");
 
 
   const handleFileSelect = (event) => {
@@ -200,6 +201,7 @@ const Usb = () => {
         isSmartPriceEnabled: isSmartPriceEnabled,
         finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
         timestamp: new Date().toISOString(),
+        status: status
       });
 
 
@@ -296,6 +298,7 @@ const Usb = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
+                filePreviewUrl = {filePreviewUrl}
               />
             </div>
           </div>

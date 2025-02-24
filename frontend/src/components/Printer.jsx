@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Link } from "react-router-dom";
+import {realtimeDb} from '../../../backend/firebase/firebase-config'; 
+import { ref, onValue, remove, update } from "firebase/database"
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 
@@ -8,6 +10,48 @@ import M_Qrcode from './M_Qrcode';
 
 const Printer = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [queue, setQueue] = useState([]);
+
+  useEffect(() => {
+    const queueRef = ref(realtimeDb, "files");
+
+    const unsubscribe = onValue(queueRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log("🔥 Data fetched from Firebase:", data); // Debugging log
+      if (data) {
+        const updatedQueue = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+
+        // Automatically remove files marked as "Done"
+        updatedQueue.forEach((file) => {
+          if (file.status === "Done") {
+            console.log(`✅ Removing file: ${file.name} (ID: ${file.id})`);
+            remove(ref(realtimeDb, `files/${file.id}`));
+          }
+        });
+
+        // Only show files that are not "Done"
+        setQueue(updatedQueue.filter(file => file.status !== "Done"));
+      } else {
+        setQueue([]);
+      }
+    });
+
+    return () => unsubscribe(); // Clean up listener on unmount
+  }, []);
+
+
+  // Function to simulate printing (updates file status)
+  const startPrinting = (fileId) => {
+    update(ref(realtimeDb, `files/${fileId}`), { status: "Processing" });
+
+    // Simulate printing delay
+    setTimeout(() => {
+      update(ref(realtimeDb, `files/${fileId}`), { status: "Done" });
+    }, 5000); // Assume printing takes 5 seconds
+  };
 
   return (
     <div className="p-4 flex flex-col lg:flex-row items-center lg:items-start h-full min-h-screen">
@@ -62,7 +106,19 @@ const Printer = () => {
 
       <div className="w-full lg:w-64 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
         <h2 className="text-xl font-bold">Printer Queue</h2>
-        <div className="flex-1 flex items-center justify-center w-full"></div>
+        <div className="flex-1 flex items-center justify-center w-full">
+        {queue.length === 0 ? (
+            <p>No files in the queue</p>
+          ) : (
+            <ul>
+              {queue.map((file) => (
+                <li key={file.id}>
+                  <strong>{file.name}</strong> - {file.status}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
 
