@@ -2,22 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
 import { realtimeDb } from '../../../backend/firebase/firebase-config'; 
 import { ref, onValue, remove, update } from "firebase/database"
+import { FaFilePdf, FaFileWord, FaFileAlt } from "react-icons/fa";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 
 import vectorImage4 from '../assets/Icons/Vector 4.png'; 
-import M_Qrcode from './M_Qrcode';
 
+
+import M_Qrcode from './M_Qrcode';
 const Printer = () => {
-  const navigate = useNavigate();            
+  const navigate = useNavigate();     
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [queue, setQueue] = useState([]);
 
   useEffect(() => {
     const queueRef = ref(realtimeDb, "files");
+
     const unsubscribe = onValue(queueRef, (snapshot) => {
       const data = snapshot.val();
-      console.log("🔥 Data fetched from Firebase:", data);
+      console.log("Raw data from Firebase:", data);
 
       if (data) {
         const updatedQueue = Object.keys(data).map((key) => ({
@@ -25,16 +28,8 @@ const Printer = () => {
           ...data[key],
         }));
 
-
-        updatedQueue.forEach((file) => {
-          if (file.status === "Done") {
-            console.log(`✅ Removing file: ${file.name} (ID: ${file.id})`);
-            remove(ref(realtimeDb, `files/${file.id}`));
-          }
-        });
-
-       
-        setQueue(updatedQueue.filter(file => file.status !== "Done"));
+        console.log("Processed queue:", updatedQueue);
+        setQueue(updatedQueue);
       } else {
         setQueue([]);
       }
@@ -43,15 +38,33 @@ const Printer = () => {
     return () => unsubscribe();
   }, []);
 
-  
+  // Function to start printing a file
   const startPrinting = (fileId) => {
     update(ref(realtimeDb, `files/${fileId}`), { status: "Processing" });
 
+    console.log(`🖨️ Printing started for file ID: ${fileId}`);
+
     setTimeout(() => {
-      update(ref(realtimeDb, `files/${fileId}`), { status: "Done" });
-    }, 5000);
+      update(ref(realtimeDb, `files/${fileId}`), { status: "Done" })
+        .then(() => console.log(`✅ Printing completed for file ID: ${fileId}`))
+        .catch((error) => console.error("Error updating status:", error));
+    }, 5000); 
   };
 
+  // Function to determine the file type icon
+  const getFileIcon = (fileName) => {
+    if (!fileName) return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon
+
+    const ext = fileName.split(".").pop().toLowerCase(); // Get file extension
+
+    if (ext === "pdf") {
+      return <FaFilePdf className="text-red-500 text-2xl" />; // PDF icon
+    } else if (ext === "docx" || ext === "doc") {
+      return <FaFileWord className="text-blue-500 text-2xl" />; // DOCX icon
+    } else {
+      return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon for unknown files
+    }
+  };
   return (
     <div className="p-4 flex flex-col lg:flex-row items-center lg:items-start h-full min-h-screen">
       <div className="w-full lg:flex-1">
@@ -70,7 +83,7 @@ const Printer = () => {
             </div>
           </Link>
 
-         
+      
           <div 
             className="flex flex-col items-center cursor-pointer"
             onClick={() => navigate('/bt-upload')}
@@ -80,7 +93,7 @@ const Printer = () => {
             </div>
             <p className="text-2xl font-bold text-[#31304D] mt-2">Bluetooth</p>
           </div>
-
+       
   
           <Link to="/usb">
             <div className="flex flex-col items-center cursor-pointer">
@@ -108,13 +121,35 @@ const Printer = () => {
       <div className="w-full lg:w-64 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
         <h2 className="text-xl font-bold">Printer Queue</h2>
         <div className="flex-1 flex items-center justify-center w-full">
-          {queue.length === 0 ? (
+        {queue.length === 0 ? (
             <p>No files in the queue</p>
           ) : (
-            <ul>
+            <ul className="w-full">
               {queue.map((file) => (
-                <li key={file.id}>
-                  <strong>{file.name}</strong> - {file.status}
+                <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
+                  {/* File Type Icon */}
+                  {getFileIcon(file.name || file.filename)}
+
+                  <div>
+                    <p><strong>Name:</strong> {file.name || file.filename}</p>
+                    <p><strong>ID:</strong> {file.id}</p>
+                    <p>
+                      <strong>Link:</strong>{" "}
+                      <a href={file.link || file.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                        {file.link || file.url}
+                      </a>
+                    </p>
+                    <p><strong>Status:</strong> {file.status}</p>
+
+                    {file.status === "Pending" && (
+                      <button
+                        onClick={() => startPrinting(file.id)}
+                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+                      >
+                        Start Print
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
