@@ -1,5 +1,3 @@
-// BTUpload.jsx
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint } from "react-icons/fa";
@@ -51,6 +49,7 @@ const BTUpload = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   // ----------------------------
   // Check if Bluetooth is supported by the browser
@@ -171,7 +170,7 @@ const BTUpload = () => {
   // 6) Print Handler
   // ----------------------------
   const handlePrint = async () => {
-
+    setIsLoading(true); 
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
@@ -266,7 +265,9 @@ const BTUpload = () => {
     } catch (error) {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
-    }
+    } finally{
+        setIsLoading(false);
+      }
   };
 
   // ----------------------------

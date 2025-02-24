@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPrint } from "react-icons/fa";
+import { FaArrowLeft, FaPrint} from "react-icons/fa";
 
 import CustomPage from "../components/usb/customized_page";
 import DocumentPreview from "../components/usb/document_preview";
@@ -39,7 +39,7 @@ const Usb = () => {
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [status , setStatus] = useState("pending");
-
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -121,6 +121,7 @@ const Usb = () => {
   };
 
   const handlePrint = async () => {
+    setIsLoading(true); 
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
@@ -224,6 +225,8 @@ const Usb = () => {
     } catch (error) {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
+    } finally{
+      setIsLoading(false);
     }
   };
 
@@ -312,14 +315,24 @@ const Usb = () => {
           </div>
         </div>
 
-        {/* Bottom Section (Print Button) */}
-        <div className="flex flex-col items-center mt-auto pt-6">
-          <button
-            onClick={handlePrint}
-            className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
-          >
-            Print <FaPrint className="ml-2 text-white" />
-          </button>
+     {/* Bottom Section (Print Button) */}
+     <div className="flex flex-col items-center mt-auto pt-6">
+          {isLoading ? (
+            <button
+              disabled
+              className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+            >
+              <i className="fa fa-spinner fa-spin mr-2"></i>
+              Printing...
+            </button>
+          ) : (
+            <button
+              onClick={handlePrint}
+              className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+            >
+              Print <FaPrint className="ml-2 text-white" />
+            </button>
+          )}
         </div>
       </div>
     </div>

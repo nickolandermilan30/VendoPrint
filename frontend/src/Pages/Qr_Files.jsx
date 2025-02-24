@@ -38,7 +38,7 @@ const QRUpload = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
-
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -120,6 +120,7 @@ const QRUpload = () => {
   };
 
   const handlePrint = async () => {
+    setIsLoading(true); 
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
@@ -200,6 +201,7 @@ const QRUpload = () => {
         isSmartPriceEnabled: isSmartPriceEnabled,
         finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
         timestamp: new Date().toISOString(),
+        status: status
       });
 
 
@@ -222,8 +224,11 @@ const QRUpload = () => {
     } catch (error) {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
+    } finally{
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className="p-4">
@@ -310,14 +315,24 @@ const QRUpload = () => {
         </div>
 
         {/* Bottom Section (Print Button) */}
-        <div className="flex flex-col items-center mt-auto pt-6">
-          <button
-            onClick={handlePrint}
-            className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
-          >
-            Print <FaPrint className="ml-2 text-white" />
-          </button>
-        </div>
+      <div className="flex flex-col items-center mt-auto pt-6">
+               {isLoading ? (
+                 <button
+                   disabled
+                   className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+                 >
+                   <i className="fa fa-spinner fa-spin mr-2"></i>
+                   Printing...
+                 </button>
+               ) : (
+                 <button
+                   onClick={handlePrint}
+                   className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+                 >
+                   Print <FaPrint className="ml-2 text-white" />
+                 </button>
+               )}
+             </div>
       </div>
     </div>
   );
