@@ -6,7 +6,7 @@ import Xerox from "./Pages/Xerox";
 import Settings from "./Pages/Admin"; 
 import Usb from "./Pages/Usb"; 
 import QRUpload from "./Pages/Qr_Files";
-
+import BTUpload from "./Pages/Bluetooth_upload";
 const App = () => {
   return (
     <Router>
@@ -19,6 +19,7 @@ const App = () => {
           <Route path="/settings" element={<Settings />} />
           <Route path="/usb" element={<Usb />} /> 
           <Route path ="/qr-upload" element = {<QRUpload />} />
+          <Route path ="/bt-upload" element = {<BTUpload />} />
         </Route>
       </Routes>
     </Router>
