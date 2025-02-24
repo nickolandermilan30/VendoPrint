@@ -14,31 +14,24 @@ const Printer = () => {
 
   useEffect(() => {
     const queueRef = ref(realtimeDb, "files");
-
+  
     const unsubscribe = onValue(queueRef, (snapshot) => {
       const data = snapshot.val();
-      console.log("🔥 Data fetched from Firebase:", data); // Debugging log
+      console.log("Data fetched from Firebase:", data); // Debugging log
       if (data) {
-        const updatedQueue = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
-
-        // Automatically remove files marked as "Done"
-        updatedQueue.forEach((file) => {
-          if (file.status === "Done") {
-            console.log(`✅ Removing file: ${file.name} (ID: ${file.id})`);
-            remove(ref(realtimeDb, `files/${file.id}`));
-          }
-        });
-
-        // Only show files that are not "Done"
-        setQueue(updatedQueue.filter(file => file.status !== "Done"));
+        const updatedQueue = Object.keys(data)
+          .map((key) => ({
+            id: key,
+            ...data[key],
+          }))
+          .filter((file) => file.status !== "Done"); // Only keep files that are not "Done"
+  
+        setQueue(updatedQueue);
       } else {
         setQueue([]);
       }
     });
-
+  
     return () => unsubscribe(); // Clean up listener on unmount
   }, []);
 
@@ -113,7 +106,8 @@ const Printer = () => {
             <ul>
               {queue.map((file) => (
                 <li key={file.id}>
-                  <strong>{file.name}</strong> - {file.status}
+                 <p><strong>Name:</strong> {file.fileName || file.fileName}</p>
+                 <p><strong>Status:</strong> {file.status|| file.status}</p>
                 </li>
               ))}
             </ul>

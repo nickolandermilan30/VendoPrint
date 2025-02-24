@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { exec } from "child_process";
 
 
+
 const { getPrinters, print } = pdfToPrinter; 
 
 export const fetchPrinters = async (req, res) => {
@@ -20,16 +21,38 @@ export const fetchPrinters = async (req, res) => {
 
 const checkPrinterStatus = (printerName) => {
   return new Promise((resolve, reject) => {
-    exec(`wmic printer where name="${printerName}" get PrinterStatus`, (error, stdout, stderr) => {
-      if (error) {
-        return reject(new Error("Failed to retrieve printer status"));
+    exec(
+      `powershell "Get-Printer -Name '${printerName}' | Select-Object PrinterStatus"`,
+      (error, stdout, stderr) => {
+        if (error) {
+          return reject(new Error(`Failed to retrieve printer status: ${stderr || error.message}`));
+        }
+
+        const status = stdout.trim().split("\n")[1]?.trim();
+        if (!status) {
+          return reject(new Error("Could not determine printer status"));
+        }
+
+        const statusCodes = {
+          "3": "Online",
+          "4": "Paused",
+          "5": "Error",
+          "6": "Offline",
+          "7": "Not Available",
+          "9": "Paper Jam",
+          "10": "Paper Out",
+          "11": "Manual Feed",
+          "12": "Paper Problem",
+          "13": "Offline",
+          "16": "No Toner",
+        };
+
+        const statusMessage = statusCodes[status] || "Unknown Status";
+        resolve({ isOnline: status === "3", statusMessage });
       }
-      const status = stdout.trim().split("\n")[1]?.trim();
-      resolve(status === "3"); 
-    });
+    );
   });
 };
-
 
 export const printFile = async (req, res) => {
   const { printerName, fileUrl } = req.body;
@@ -38,11 +61,9 @@ export const printFile = async (req, res) => {
   const filePath = path.join(documentsDir, fileName);
 
   try {
-    
     if (!fs.existsSync(documentsDir)) {
       fs.mkdirSync(documentsDir, { recursive: true });
     }
-
 
     const response = await axios.get(fileUrl, { responseType: "stream" });
     const writer = fs.createWriteStream(filePath);
@@ -50,7 +71,6 @@ export const printFile = async (req, res) => {
 
     writer.on("finish", async () => {
       try {
-     
         const printers = await getPrinters();
         const printerNames = printers.map((printer) => printer.name);
 
@@ -58,16 +78,14 @@ export const printFile = async (req, res) => {
           throw new Error("Printer not found");
         }
 
-
-        const isOnline = await checkPrinterStatus(printerName);
+        // 🔍 Check Printer Status
+        const { isOnline, statusMessage } = await checkPrinterStatus(printerName);
         if (!isOnline) {
-          throw new Error("Printer is offline");
+          throw new Error(`Printer is not available: ${statusMessage}`);
         }
 
         await print(filePath, { printer: printerName });
-
         fs.unlinkSync(filePath);
-
         res.json({ success: true, message: "Print job sent successfully" });
       } catch (error) {
         console.error("Error during print job:", error);

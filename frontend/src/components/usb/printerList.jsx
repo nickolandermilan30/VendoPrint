@@ -28,7 +28,6 @@ const PrinterList = ({ selectedPrinter, setSelectedPrinter }) => {
           onChange={(e) => setSelectedPrinter(e.target.value)}
           className="w-64 p-2 border-2 border-[#31304D] rounded-lg text-lg font-bold text-[#31304D]"
         >
-          <option value="">Select a printer...</option>
           {Array.isArray(printers) && printers.length > 0 ? (
             printers.map((printer, index) => (
               <option key={index} value={printer.name}>
