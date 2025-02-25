@@ -1,49 +1,22 @@
 import React, { useEffect } from "react";
 
 function SmartPriceLabel({
-  isColor,
   copies,
   totalPages,
   calculatedPrice,
   setCalculatedPrice,
-  customPageRange,
-  selectedPageOption,
   filePreviewUrl
 }) {
 
   useEffect(() => {
 
-    const pricePerPage = isColor ? 14.75 : 7.75;
-    const oddPagesCount = Math.ceil(totalPages / 2);  
-    const evenPagesCount = Math.floor(totalPages / 2);
+    const pricePerPage = 2;
+   
 
 
   let pagesToPrint = totalPages;
 
-  if (selectedPageOption === "Odd") {
-     pagesToPrint = oddPagesCount;
-    } else if (selectedPageOption === "Even") {
-      pagesToPrint = evenPagesCount;
-   } else if (selectedPageOption === "Custom" && customPageRange) {
-
-     const customPages = customPageRange
-       .split(",")
-       .flatMap((range) => {
-        if (range.includes("-")) {
-          const [start, end] = range.split("-").map(Number);
-          return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-        } else {
-      return [parseInt(range, 10)];
-    }
- });
-
-console.log("Custom Pages:", customPages);
-
- pagesToPrint = customPages.length;
- } else if (selectedPageOption === "All") {
  
- pagesToPrint = totalPages;
-}
 
 
 if (!filePreviewUrl){
@@ -54,7 +27,7 @@ if (!filePreviewUrl){
   setCalculatedPrice(totalCost);}
 
   
-  }, [isColor, copies, totalPages, setCalculatedPrice,customPageRange, selectedPageOption,filePreviewUrl]);
+  }, [ copies, totalPages, setCalculatedPrice,filePreviewUrl]);
 
   return (
     <div className="mt-8 flex items-center space-x-4 w-full">
