@@ -131,7 +131,7 @@ const Printer = () => {
                   {getFileIcon(file.name || file.filename)}
 
                   <div>
-                    <p><strong>Name:</strong> {fileName}</p>
+                    <p><strong>Name:</strong> {file.fileName}</p>
                     <p><strong>ID:</strong> {file.id}</p>
                     <p><strong>Status:</strong> {file.status}</p>
 
