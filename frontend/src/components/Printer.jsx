@@ -131,9 +131,15 @@ const Printer = () => {
                   {getFileIcon(file.name || file.filename)}
 
                   <div>
-                    <p><strong>Name:</strong> {fileName}</p>
-                    <p><strong>ID:</strong> {file.id}</p>
-                    <p><strong>Status:</strong> {file.status}</p>
+                    <p>
+                      <strong>Name:</strong> {file.name || file.filename}
+                    </p>
+                    <p>
+                      <strong>ID:</strong> {file.id}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {file.status}
+                    </p>
 
                     {file.status === "Pending" && (
                       <button
@@ -146,6 +152,7 @@ const Printer = () => {
                   </div>
                 </li>
               ))}
+
             </ul>
           )}
         </div>
