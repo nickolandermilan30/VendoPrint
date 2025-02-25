@@ -131,14 +131,8 @@ const Printer = () => {
                   {getFileIcon(file.name || file.filename)}
 
                   <div>
-                    <p><strong>Name:</strong> {file.name || file.filename}</p>
+                    <p><strong>Name:</strong> {fileName}</p>
                     <p><strong>ID:</strong> {file.id}</p>
-                    <p>
-                      <strong>Link:</strong>{" "}
-                      <a href={file.link || file.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                        {file.link || file.url}
-                      </a>
-                    </p>
                     <p><strong>Status:</strong> {file.status}</p>
 
                     {file.status === "Pending" && (
