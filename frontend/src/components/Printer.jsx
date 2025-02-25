@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
 import { realtimeDb } from '../../../backend/firebase/firebase-config'; 
 import { ref, onValue, remove, update } from "firebase/database"
-import { FaFilePdf, FaFileWord, FaFileAlt } from "react-icons/fa";
+import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 
@@ -54,17 +54,20 @@ const Printer = () => {
   // Function to determine the file type icon
   const getFileIcon = (fileName) => {
     if (!fileName) return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon
-
+  
     const ext = fileName.split(".").pop().toLowerCase(); // Get file extension
-
+  
     if (ext === "pdf") {
       return <FaFilePdf className="text-red-500 text-2xl" />; // PDF icon
     } else if (ext === "docx" || ext === "doc") {
       return <FaFileWord className="text-blue-500 text-2xl" />; // DOCX icon
+    } else if (ext === "jpg" || ext === "png" || ext === "jpeg") {
+      return <FaFileImage className="text-green-500 text-2xl" />; // Image icon
     } else {
       return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon for unknown files
     }
   };
+  
   return (
     <div className="p-4 flex flex-col lg:flex-row items-center lg:items-start h-full min-h-screen">
       <div className="w-full lg:flex-1">
@@ -128,9 +131,11 @@ const Printer = () => {
               {queue.map((file) => (
                 <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
                   {/* File Type Icon */}
-                  {getFileIcon(file.name || file.filename)}
+                  {getFileIcon(file.name || file.fileName)}
 
                   <div>
+                    <p><strong>Name:</strong> {file.fileName}</p>
+                    <p><strong>Status:</strong> {file.status}</p>
                     <p>
                       <strong>Name:</strong> {file.name || file.filename}
                     </p>

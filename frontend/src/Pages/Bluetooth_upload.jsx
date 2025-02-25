@@ -170,45 +170,81 @@ const BTUpload = () => {
   // 6) Print Handler
   // ----------------------------
   const handlePrint = async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
     }
-
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
       return;
     }
-
+  
     let finalFileUrlToPrint = filePreviewUrl;
-
+  
     try {
-      // PDF partial page logic
       if (fileToUpload?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
         );
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
+  
         const indicesToKeep = getPageIndicesToPrint({
           totalPages,
           selectedPageOption,
           customPageRange,
         });
-
+  
         if (indicesToKeep.length === 0) {
           alert("No pages selected based on your page option!");
           return;
         }
-
+  
         const newPdfDoc = await PDFDocument.create();
         const copiedPages = await newPdfDoc.copyPages(pdfDoc, indicesToKeep);
-
+  
         copiedPages.forEach((page) => {
+          if (orientation === "Landscape") {
+            page.setRotation(degrees(90)); // Rotate page if landscape
+          }
           newPdfDoc.addPage(page);
         });
-
+  
+        const newPdfBytes = await newPdfDoc.save();
+        const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
+  
+        const timeStamp = Date.now();
+        const newPdfName = `processed-${timeStamp}.pdf`;
+        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
+  
+        await uploadBytesResumable(storageRef2, newPdfBlob);
+        const newUrl = await getDownloadURL(storageRef2);
+        finalFileUrlToPrint = newUrl;
+      } 
+  
+      else if (
+        fileToUpload?.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
+          res.arrayBuffer()
+        );
+        const pdfDoc = await PDFDocument.create();
+        const extractedText = await mammoth.extractRawText({ arrayBuffer });
+  
+        const page = pdfDoc.addPage([612, 792]); // Default Letter size
+        const { width, height } = page.getSize();
+  
+        if (orientation === "Landscape") {
+          page.setRotation(degrees(90));
+        }
+  
+        page.drawText(extractedText.value, {
+          x: 50,
+          y: height - 50,
+          size: 12,
+        });
+  
         const newPdfBytes = await newPdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
 

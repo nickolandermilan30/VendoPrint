@@ -3,14 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaPrint } from 'react-icons/fa';
 
 
-import CustomPage from "../components/xerox/customized_page";
 import DocumentPreview from "../components/xerox/document_preview";
-import SmartPriceToggle from "../components/xerox/smart_price";
 import PrinterList from "../components/xerox/printerList";
-import PageOrientation from "../components/xerox/page_orientation";
-// import SelectColor from "../components/xerox/select_color";
-import PageSize from "../components/xerox/page_size";
 import Copies from "../components/xerox/copies";
+import SmartPriceToggle from "../components/xerox/smart_price";
 
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
@@ -33,15 +29,11 @@ const Xerox = () => {
    // Print settings states
     const [selectedPrinter, setSelectedPrinter] = useState("");
     const [copies, setCopies] = useState(1);
-    const [selectedSize, setSelectedSize] = useState("Letter 8.5 x 11");
-    // const [isColor, setIsColor] = useState(false);
-    const [orientation, setOrientation] = useState("Portrait");
-    const [selectedPageOption, setSelectedPageOption] = useState("All");
-    const [customPageRange, setCustomPageRange] = useState("");
-    const [totalPages, setTotalPages] = useState(1);
     const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
     const [calculatedPrice, setCalculatedPrice] = useState(0);
-    const [status , setStatus] = useState("pending");
+  
+   
+    const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
 
@@ -197,16 +189,8 @@ const Xerox = () => {
           fileUrl: finalFileUrlToPrint, 
           printerName: selectedPrinter,
           copies: copies,
-          paperSize: selectedSize,
-          // isColor: isColor,
-          orientation: orientation,
-          pageOption: selectedPageOption,
-          customPageRange: customPageRange,
-          totalPages: totalPages,
-          isSmartPriceEnabled: isSmartPriceEnabled,
-          finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
+          isColor: isColor,
           timestamp: new Date().toISOString(),
-          status: status
         });
   
   
@@ -274,39 +258,18 @@ const Xerox = () => {
             {/* Page Settings */}
             <div className="mt-6 space-y-4">
               <Copies copies={copies} setCopies={setCopies} />
-              <PageSize
-                selectedSize={selectedSize}
-                setSelectedSize={setSelectedSize}
-              />
-              <CustomPage
-                selectedPageOption={selectedPageOption}
-                setSelectedPageOption={setSelectedPageOption}
-                customPageRange={customPageRange}
-                setCustomPageRange={setCustomPageRange}
-                totalPages={totalPages}
-              />
-              {/* <SelectColor isColor={isColor} setIsColor={setIsColor} /> */}
-              <PageOrientation
-                orientation={orientation}
-                setOrientation={setOrientation}
-              />
 
               <SmartPriceToggle
-                paperSize={selectedSize}
-                // isColor={isColor}
+                
                 copies={copies}
-                totalPages={totalPages}
-                setTotalPages={setTotalPages}
                 isSmartPriceEnabled={isSmartPriceEnabled}
                 setIsSmartPriceEnabled={setIsSmartPriceEnabled}
                 calculatedPrice={calculatedPrice}
+                totalPages ={totalPages}
                 setCalculatedPrice={setCalculatedPrice}
-                selectedPageOption={selectedPageOption}
-                setSelectedPageOption={setSelectedPageOption}
-                customPageRange={customPageRange}
-                setCustomPageRange={setCustomPageRange}
                 filePreviewUrl = {filePreviewUrl}
               />
+          
             </div>
           </div>
 
