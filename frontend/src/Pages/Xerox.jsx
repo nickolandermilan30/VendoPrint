@@ -8,7 +8,7 @@ import DocumentPreview from "../components/xerox/document_preview";
 import SmartPriceToggle from "../components/xerox/smart_price";
 import PrinterList from "../components/xerox/printerList";
 import PageOrientation from "../components/xerox/page_orientation";
-import SelectColor from "../components/xerox/select_color";
+// import SelectColor from "../components/xerox/select_color";
 import PageSize from "../components/xerox/page_size";
 import Copies from "../components/xerox/copies";
 
@@ -34,7 +34,7 @@ const Xerox = () => {
     const [selectedPrinter, setSelectedPrinter] = useState("");
     const [copies, setCopies] = useState(1);
     const [selectedSize, setSelectedSize] = useState("Letter 8.5 x 11");
-    const [isColor, setIsColor] = useState(false);
+    // const [isColor, setIsColor] = useState(false);
     const [orientation, setOrientation] = useState("Portrait");
     const [selectedPageOption, setSelectedPageOption] = useState("All");
     const [customPageRange, setCustomPageRange] = useState("");
@@ -198,7 +198,7 @@ const Xerox = () => {
           printerName: selectedPrinter,
           copies: copies,
           paperSize: selectedSize,
-          isColor: isColor,
+          // isColor: isColor,
           orientation: orientation,
           pageOption: selectedPageOption,
           customPageRange: customPageRange,
@@ -285,7 +285,7 @@ const Xerox = () => {
                 setCustomPageRange={setCustomPageRange}
                 totalPages={totalPages}
               />
-              <SelectColor isColor={isColor} setIsColor={setIsColor} />
+              {/* <SelectColor isColor={isColor} setIsColor={setIsColor} /> */}
               <PageOrientation
                 orientation={orientation}
                 setOrientation={setOrientation}
@@ -293,7 +293,7 @@ const Xerox = () => {
 
               <SmartPriceToggle
                 paperSize={selectedSize}
-                isColor={isColor}
+                // isColor={isColor}
                 copies={copies}
                 totalPages={totalPages}
                 setTotalPages={setTotalPages}
@@ -327,14 +327,14 @@ const Xerox = () => {
               className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
             >
               <i className="fa fa-spinner fa-spin mr-2"></i>
-              Printing...
+              Processing...
             </button>
           ) : (
             <button
               onClick={handlePrint}
               className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
             >
-              Print <FaPrint className="ml-2 text-white" />
+              Xerox <FaPrint className="ml-2 text-white" />
             </button>
           )}
         </div>
