@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaPrint } from 'react-icons/fa';
 
 
-import CustomPage from "../components/usb/customized_page";
-import DocumentPreview from "../components/usb/document_preview";
-import SmartPriceToggle from "../components/usb/smart_price";
-import PrinterList from "../components/usb/printerList";
-import PageOrientation from "../components/usb/page_orientation";
-import SelectColor from "../components/usb/select_color";
-import PageSize from "../components/usb/page_size";
-import Copies from "../components/usb/copies";
+import CustomPage from "../components/xerox/customized_page";
+import DocumentPreview from "../components/xerox/document_preview";
+import SmartPriceToggle from "../components/xerox/smart_price";
+import PrinterList from "../components/xerox/printerList";
+import PageOrientation from "../components/xerox/page_orientation";
+import SelectColor from "../components/xerox/select_color";
+import PageSize from "../components/xerox/page_size";
+import Copies from "../components/xerox/copies";
 
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
