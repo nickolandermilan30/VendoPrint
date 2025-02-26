@@ -52,6 +52,28 @@ const BTUpload = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+
+  const [availableCoins, setAvailableCoins] = useState(0);
+  
+  
+    useEffect(() => {
+      const fetchAvailableCoins = async () => {
+        const coinRef = dbRef(realtimeDb, "coin/1/availableCoins");
+        try {
+          const snapshot = await get(coinRef);
+          if (snapshot.exists()) {
+            setAvailableCoins(snapshot.val());
+          } else {
+            console.error("Error retrieving available coins.");
+          }
+        } catch (error) {
+          console.error("Error fetching available coins:", error);
+        }
+      };
+    
+      fetchAvailableCoins();
+    }, []);
+
   // ----------------------------
   // Check if Bluetooth is supported by the browser
   // ----------------------------
@@ -177,68 +199,134 @@ const BTUpload = () => {
   // 6) Print Handler
   // ----------------------------
   const handlePrint = async () => {
-    setIsLoading(true); 
+    setIsLoading(true);
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
     }
-
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
       return;
     }
 
+      // Fetch current available coins from Firebase
+    const coinRef = dbRef(realtimeDb, "coin/1/availableCoins");
+    try {
+      const snapshot = await get(coinRef);
+      if (snapshot.exists()) {
+        availableCoins = snapshot.val();
+      } else {
+        alert("Error retrieving available coins.");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching available coins:", error);
+      alert("Error fetching available coins.");
+      setIsLoading(false);
+      return;
+    }
+  
+    // Check if availableCoins is enough to print
+    if (availableCoins < calculatedPrice) {
+      alert("Not enough coins to proceed with printing.");
+      setIsLoading(false);
+      return;
+    }
+  
     let finalFileUrlToPrint = filePreviewUrl;
 
     try {
-      // PDF partial page logic
       if (fileToUpload?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
         );
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
+  
         const indicesToKeep = getPageIndicesToPrint({
           totalPages,
           selectedPageOption,
           customPageRange,
         });
-
+  
         if (indicesToKeep.length === 0) {
           alert("No pages selected based on your page option!");
           return;
         }
-
+  
         const newPdfDoc = await PDFDocument.create();
         const copiedPages = await newPdfDoc.copyPages(pdfDoc, indicesToKeep);
-
+  
         copiedPages.forEach((page) => {
+          if (orientation === "Landscape") {
+            page.setRotation(degrees(90)); // Rotate page if landscape
+          }
           newPdfDoc.addPage(page);
         });
-
+  
         const newPdfBytes = await newPdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
-
-        // Upload partial PDF to Firebase
+  
         const timeStamp = Date.now();
-        const newPdfName = `partial-pages-${timeStamp}.pdf`;
+        const newPdfName = `processed-${timeStamp}.pdf`;
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
+  
         await uploadBytesResumable(storageRef2, newPdfBlob);
         const newUrl = await getDownloadURL(storageRef2);
         finalFileUrlToPrint = newUrl;
+      } 
+  
+      else if (
+        fileToUpload?.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
+          res.arrayBuffer()
+        );
+        const pdfDoc = await PDFDocument.create();
+        const extractedText = await mammoth.extractRawText({ arrayBuffer });
+  
+        const page = pdfDoc.addPage([612, 792]); // Default Letter size
+        const { width, height } = page.getSize();
+  
+        if (orientation === "Landscape") {
+          page.setRotation(degrees(90));
+        }
+  
+        page.drawText(extractedText.value, {
+          x: 50,
+          y: height - 50,
+          size: 12,
+        });
 
-      } else {
-        // Non-PDF partial logic (docx, images, etc.)
+ 
+        const newPdfBytes = await newPdfDoc.save();
+
+        const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
+
+
+        const timeStamp = Date.now();
+        const newPdfName = `partial-pages-${timeStamp}.pdf`;
+        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
+
+        await uploadBytesResumable(storageRef2, newPdfBlob);
+
+        const newUrl = await getDownloadURL(storageRef2);
+        finalFileUrlToPrint = newUrl
+      } 
+
+      else {
+      
         if (selectedPageOption !== "All") {
           alert("Partial page selection is only supported for PDF right now.");
         }
       }
 
-      // Save print job details in Realtime Database
+ 
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
-        fileUrl: finalFileUrlToPrint,
+        fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -247,12 +335,15 @@ const BTUpload = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        isSmartPriceEnabled: isSmartPriceEnabled,
-        finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
+        finalPrice:  calculatedPrice,
         timestamp: new Date().toISOString(),
+        status: status
       });
 
-      // Example call to your local print server
+      const updatedCoins = availableCoins - calculatedPrice;
+      await update(coinRef, { availableCoins: updatedCoins });
+      alert("Print job sent successfully. Coins deducted.");
+
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
@@ -273,8 +364,8 @@ const BTUpload = () => {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
     } finally{
-        setIsLoading(false);
-      }
+      setIsLoading(false);
+    }
   };
 
   // ----------------------------
@@ -381,6 +472,11 @@ const BTUpload = () => {
                 orientation={orientation}
                 setOrientation={setOrientation}
               />
+
+
+              <p className="mt-6 font-bold text-gray-700 text-2xl">
+              Inserted coins: {availableCoins}
+              </p>
 
               <SmartPriceToggle
                 paperSize={selectedSize}

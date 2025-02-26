@@ -39,6 +39,26 @@ const QRUpload = () => {
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableCoins, setAvailableCoins] = useState(0);
+  
+  
+    useEffect(() => {
+      const fetchAvailableCoins = async () => {
+        const coinRef = dbRef(realtimeDb, "coin/1/availableCoins");
+        try {
+          const snapshot = await get(coinRef);
+          if (snapshot.exists()) {
+            setAvailableCoins(snapshot.val());
+          } else {
+            console.error("Error retrieving available coins.");
+          }
+        } catch (error) {
+          console.error("Error fetching available coins:", error);
+        }
+      };
+    
+      fetchAvailableCoins();
+    }, []);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -129,6 +149,32 @@ const QRUpload = () => {
       alert("No printer selected! Please choose a printer first.");
       return;
     }
+
+    // Fetch current available coins from Firebase
+        const coinRef = dbRef(realtimeDb, "coin/1/availableCoins");
+        try {
+          const snapshot = await get(coinRef);
+          if (snapshot.exists()) {
+            availableCoins = snapshot.val();
+          } else {
+            alert("Error retrieving available coins.");
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Error fetching available coins:", error);
+          alert("Error fetching available coins.");
+          setIsLoading(false);
+          return;
+        }
+
+      // Check if availableCoins is enough to print
+    if (availableCoins < calculatedPrice) {
+      alert("Not enough coins to proceed with printing.");
+      setIsLoading(false);
+      return;
+    }
+  
   
     let finalFileUrlToPrint = filePreviewUrl;
   
@@ -194,6 +240,7 @@ const QRUpload = () => {
           y: height - 50,
           size: 12,
         });
+        
   
  
         const newPdfBytes = await newPdfDoc.save();
@@ -231,13 +278,14 @@ const QRUpload = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        isSmartPriceEnabled: isSmartPriceEnabled,
-        finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
+        finalPrice:calculatedPrice,
         timestamp: new Date().toISOString(),
         status: status
       });
 
-
+      const updatedCoins = availableCoins - calculatedPrice;
+            await update(coinRef, { availableCoins: updatedCoins });
+            alert("Print job sent successfully. Coins deducted.");
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
@@ -319,6 +367,10 @@ const QRUpload = () => {
                 orientation={orientation}
                 setOrientation={setOrientation}
               />
+
+              <p className="mt-6 font-bold text-gray-700 text-2xl">
+              Inserted coins: {availableCoins}
+              </p>
 
               <SmartPriceToggle
                 paperSize={selectedSize}
