@@ -121,7 +121,7 @@ const Printer = () => {
       </div>
 
 
-      <div className="w-full lg:w-64 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
+      <div className="w-full lg:w-80 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
         <h2 className="text-xl font-bold">Printer Queue</h2>
         <div className="flex-1 flex items-center justify-center w-full">
         {queue.length === 0 ? (
@@ -148,6 +148,7 @@ const Printer = () => {
                   </div>
                 </li>
               ))}
+
             </ul>
           )}
         </div>
