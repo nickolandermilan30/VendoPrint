@@ -44,7 +44,7 @@ const QRUpload = () => {
   
     useEffect(() => {
       const fetchAvailableCoins = async () => {
-        const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+        const coinRef = dbRef(realtimeDb, "coinCount");
         try {
           const snapshot = await get(coinRef);
           if (snapshot.exists()) {
@@ -151,7 +151,7 @@ const QRUpload = () => {
     }
 
     // Fetch current available coins from Firebase
-        const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+        const coinRef = dbRef(realtimeDb, "coinCount");
         try {
           const snapshot = await get(coinRef);
           if (snapshot.exists()) {
