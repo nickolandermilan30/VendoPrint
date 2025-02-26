@@ -41,7 +41,7 @@ const Usb = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [status , setStatus] = useState("pending");
   const [isLoading, setIsLoading] = useState(false);
-  const [availableCoins, setAvailableCoins] = useState(0);
+  let [availableCoins, setAvailableCoins] = useState(0);
 
 
   useEffect(() => {

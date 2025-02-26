@@ -12,7 +12,7 @@ import PageSize from "../components/bluetooth/page_size";
 import Copies from "../components/bluetooth/copies";
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
-import { getDatabase, ref as dbRef, push } from "firebase/database";
+import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
@@ -53,7 +53,7 @@ const BTUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const [availableCoins, setAvailableCoins] = useState(0);
+  let [availableCoins, setAvailableCoins] = useState(0);
   
   
     useEffect(() => {
