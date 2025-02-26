@@ -18,15 +18,14 @@ const Admin = () => {
 
   useEffect(() => {
     const db = getDatabase();
-    const coinsRef = dbRef(db, 'coins'); // Adjust path according to your database structure
+    const coinsRef = dbRef(db, 'coinCount'); // Adjust path according to your database structure
 
     onValue(coinsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        const days = Object.keys(data);
-        const coins = days.map(days => data[days].insertedCoins|| 0);
-
-        setcoinsLabels(days);
+        const coins = Object.keys(data);
+        
+    
         setDailyCoins(coins);
       }
     });
@@ -76,8 +75,8 @@ const Admin = () => {
     datasets: [
       {
         label: 'Daily Print',
-         data: dailyPrints.length ? dailyPrints : [10, 15, 20, 25, 30, 35, 40],
-        backgroundColor: '#31304D',
+         data: dailyPrints.length,
+         backgroundColor: '#31304D',
       },
     ],
   };

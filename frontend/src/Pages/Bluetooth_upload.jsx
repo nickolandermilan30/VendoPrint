@@ -214,7 +214,7 @@ const BTUpload = () => {
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        availableCoins = snapshot.val();
+        setAvailableCoins = snapshot.val();
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { realtimeDb } from '../../../backend/firebase/firebase-config'; 
 import { ref, onValue, remove, update } from "firebase/database"
 import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
+import Modal from "react-modal";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 
@@ -13,7 +14,9 @@ import M_Qrcode from './M_Qrcode';
 const Printer = () => {
   const navigate = useNavigate();     
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUsbModalOpen, setIsUsbModalOpen] = useState(false);
   const [queue, setQueue] = useState([]);
+  
 
   useEffect(() => {
     const queueRef = ref(realtimeDb, "files");
@@ -98,14 +101,14 @@ const Printer = () => {
           </div>
        
   
-          <Link to="/usb">
-            <div className="flex flex-col items-center cursor-pointer">
+      
+            <div className="flex flex-col items-center cursor-pointer" onClick={() => setIsUsbModalOpen(true)}>
               <div className="w-full max-w-xs h-48 bg-gray-100 flex items-center justify-center text-xl font-bold rounded-lg border-4 border-[#31304D] shadow-md">
                 <img src={vectorImage3} alt="USB" className="w-24 h-24" />
               </div>
               <p className="text-2xl font-bold text-[#31304D] mt-2">USB</p>
             </div>
-          </Link>
+          
 
       
           <div 
@@ -168,6 +171,19 @@ const Printer = () => {
           </div>
         </div>
       )}
+
+
+      {isUsbModalOpen && (
+              <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col items-center">
+                  <h2 className="text-2xl font-bold mb-4">Guide</h2>
+                  <p className="mb-4">1. Please select file before insert the coin.</p>
+                  <div className="flex gap-4">
+                    <button className="bg-green-500 text-white px-6 py-3 rounded-lg" onClick={() => navigate('/usb')}>Yes</button>
+                  </div>
+                </div>
+              </div>
+            )}
     </div>
   );
 };

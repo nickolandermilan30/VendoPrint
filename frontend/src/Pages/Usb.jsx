@@ -1,6 +1,7 @@
 import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint} from "react-icons/fa";
+import Modal from "react-modal";
 
 import CustomPage from "../components/usb/customized_page";
 import DocumentPreview from "../components/usb/document_preview";
@@ -161,7 +162,7 @@ const Usb = () => {
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        availableCoins = snapshot.val();
+        setAvailableCoins = snapshot.val();
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);
