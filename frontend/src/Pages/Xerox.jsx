@@ -41,7 +41,7 @@ const Xerox = () => {
     
       useEffect(() => {
         const fetchAvailableCoins = async () => {
-          const coinRef = dbRef(realtimeDb, "coin/1/availableCoins");
+          const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
           try {
             const snapshot = await get(coinRef);
             if (snapshot.exists()) {
@@ -149,7 +149,7 @@ const Xerox = () => {
       }
 
         // Fetch current available coins from Firebase
-          const coinRef = dbRef(realtimeDb, "coin/1/availableCoins");
+          const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
           try {
             const snapshot = await get(coinRef);
             if (snapshot.exists()) {
