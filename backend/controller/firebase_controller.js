@@ -1,5 +1,5 @@
 import { getDatabase, ref, set } from "firebase/database";
-import { uploadToCloudinary } from "../cloudinarry/cloudinarry_config.js";
+// import { uploadToCloudinary } from "../cloudinarry/cloudinarry_config.js";
 import { realtimeDb,storage } from "../firebase/firebase-config.js";
 
   // Add data to Realtime Database
@@ -48,51 +48,51 @@ import { realtimeDb,storage } from "../firebase/firebase-config.js";
 
 
 // Upload file to Cloudinary// Upload file to Cloudinary
-export const uploadFile = async (req, res) => {
-  try {
-    console.log("Incoming request to upload file...");
+// export const uploadFile = async (req, res) => {
+//   try {
+//     console.log("Incoming request to upload file...");
 
-    if (!req.file) {
-      console.error("No file uploaded!");
-      return res.status(400).json({ error: "No file uploaded!" });
-    }
+//     if (!req.file) {
+//       console.error("No file uploaded!");
+//       return res.status(400).json({ error: "No file uploaded!" });
+//     }
 
-    console.log("File received:", {
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
-      path: req.file.path,
-    });
+//     console.log("File received:", {
+//       originalName: req.file.originalname,
+//       mimeType: req.file.mimetype,
+//       size: req.file.size,
+//       path: req.file.path,
+//     });
 
-    // Upload file to Cloudinary
-    const cloudinaryResult = await uploadToCloudinary(req.file.path);
+//     // Upload file to Cloudinary
+//     const cloudinaryResult = await uploadToCloudinary(req.file.path);
     
-    // 🔍 Fix: Properly log the Cloudinary response
-    console.log("Cloudinary upload result:", JSON.stringify(cloudinaryResult, null, 2));
+//     // 🔍 Fix: Properly log the Cloudinary response
+//     console.log("Cloudinary upload result:", JSON.stringify(cloudinaryResult, null, 2));
 
-    // Save Cloudinary file URL in Firebase Realtime Database
-    const timestamp = Date.now();
-    const fileMetadataRef = ref(realtimeDb, `files/${timestamp}`);
+//     // Save Cloudinary file URL in Firebase Realtime Database
+//     const timestamp = Date.now();
+//     const fileMetadataRef = ref(realtimeDb, `files/${timestamp}`);
 
-    await set(fileMetadataRef, { filename: req.file.originalname, url: cloudinaryResult.url });
+//     await set(fileMetadataRef, { filename: req.file.originalname, url: cloudinaryResult.url });
 
-    console.log("File metadata saved to Firebase:", {
-      filename: req.file.originalname,
-      cloudinaryUrl: cloudinaryResult.url,
-    });
+//     console.log("File metadata saved to Firebase:", {
+//       filename: req.file.originalname,
+//       cloudinaryUrl: cloudinaryResult.url,
+//     });
 
-    // 🔍 Fix: Return JSON response properly
-    return res.status(200).json({
-      success: true,
-      url: cloudinaryResult.url,
-      message: "File uploaded successfully!",
-    });
+//     // 🔍 Fix: Return JSON response properly
+//     return res.status(200).json({
+//       success: true,
+//       url: cloudinaryResult.url,
+//       message: "File uploaded successfully!",
+//     });
 
-  } catch (error) {
-    console.error("Upload error:", error);
-    return res.status(500).json({ error: error.message });
-  }
-};
+//   } catch (error) {
+//     console.error("Upload error:", error);
+//     return res.status(500).json({ error: error.message });
+//   }
+// };
 
 export const fetchFilesFromRealtimeDatabase = () => {
   const filesRef = dbRef(realtimeDb, "files");

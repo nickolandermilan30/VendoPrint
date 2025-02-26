@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaPrint } from 'react-icons/fa';
 
@@ -10,7 +10,7 @@ import SmartPriceToggle from "../components/xerox/smart_price";
 
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
-import { getDatabase, ref as dbRef, push } from "firebase/database";
+import { getDatabase, ref as dbRef, push, get } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
