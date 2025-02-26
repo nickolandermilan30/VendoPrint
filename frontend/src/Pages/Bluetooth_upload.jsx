@@ -29,6 +29,7 @@ const BTUpload = () => {
   const [isBluetoothSupported, setIsBluetoothSupported] = useState(true);
   const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
   const [bluetoothDevice, setBluetoothDevice] = useState(null);
+  
 
   // ----------------------------
   // 2) File states
@@ -51,6 +52,28 @@ const BTUpload = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+
+  const [availableCoins, setAvailableCoins] = useState(0);
+  
+  
+    useEffect(() => {
+      const fetchAvailableCoins = async () => {
+        const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+        try {
+          const snapshot = await get(coinRef);
+          if (snapshot.exists()) {
+            setAvailableCoins(snapshot.val());
+          } else {
+            console.error("Error retrieving available coins.");
+          }
+        } catch (error) {
+          console.error("Error fetching available coins:", error);
+        }
+      };
+    
+      fetchAvailableCoins();
+    }, []);
+
   // ----------------------------
   // Check if Bluetooth is supported by the browser
   // ----------------------------
@@ -65,23 +88,29 @@ const BTUpload = () => {
   // ----------------------------
   const handleBluetoothConnect = async () => {
     if (!isBluetoothSupported) return;
-
+  
     try {
-   
-
-    
+      console.log("Requesting Bluetooth device...");
+  
       const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ["battery_service"] }],
+        acceptAllDevices: true, // Allows any Bluetooth device
+        optionalServices: ["battery_service"], // Optional service
       });
-
+  
+      console.log(`Found device: ${device.name}`);
+  
+      // Connect to GATT Server
+      const server = await device.gatt.connect();
+      console.log("Connected to GATT Server!");
+  
+      // Save connection state
       setBluetoothDevice(device);
       setIsBluetoothConnected(true);
+  
       alert(`Connected to Bluetooth device: ${device.name}`);
-      
-
     } catch (error) {
-      console.error("User canceled or failed to connect:", error);
-      alert("Failed to connect to Bluetooth device.");
+      console.error("Bluetooth connection failed:", error);
+      alert("Failed to connect to Bluetooth device. Please try again.");
     }
   };
 
@@ -179,9 +208,34 @@ const BTUpload = () => {
       alert("No printer selected! Please choose a printer first.");
       return;
     }
+
+      // Fetch current available coins from Firebase
+    const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+    try {
+      const snapshot = await get(coinRef);
+      if (snapshot.exists()) {
+        availableCoins = snapshot.val();
+      } else {
+        alert("Error retrieving available coins.");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching available coins:", error);
+      alert("Error fetching available coins.");
+      setIsLoading(false);
+      return;
+    }
+  
+    // Check if availableCoins is enough to print
+    if (availableCoins < calculatedPrice) {
+      alert("Not enough coins to proceed with printing.");
+      setIsLoading(false);
+      return;
+    }
   
     let finalFileUrlToPrint = filePreviewUrl;
-  
+
     try {
       if (fileToUpload?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
@@ -244,30 +298,35 @@ const BTUpload = () => {
           y: height - 50,
           size: 12,
         });
-  
+
+ 
         const newPdfBytes = await newPdfDoc.save();
+
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
 
-        // Upload partial PDF to Firebase
+
         const timeStamp = Date.now();
         const newPdfName = `partial-pages-${timeStamp}.pdf`;
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-        await uploadBytesResumable(storageRef2, newPdfBlob);
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl;
 
-      } else {
-        // Non-PDF partial logic (docx, images, etc.)
+        await uploadBytesResumable(storageRef2, newPdfBlob);
+
+        const newUrl = await getDownloadURL(storageRef2);
+        finalFileUrlToPrint = newUrl
+      } 
+
+      else {
+      
         if (selectedPageOption !== "All") {
           alert("Partial page selection is only supported for PDF right now.");
         }
       }
 
-      // Save print job details in Realtime Database
+ 
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
-        fileUrl: finalFileUrlToPrint,
+        fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -276,12 +335,15 @@ const BTUpload = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        isSmartPriceEnabled: isSmartPriceEnabled,
-        finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
+        finalPrice:  calculatedPrice,
         timestamp: new Date().toISOString(),
+        status: status
       });
 
-      // Example call to your local print server
+      const updatedCoins = availableCoins - calculatedPrice;
+      await update(coinRef, { availableCoins: updatedCoins });
+      alert("Print job sent successfully. Coins deducted.");
+
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
@@ -302,8 +364,8 @@ const BTUpload = () => {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
     } finally{
-        setIsLoading(false);
-      }
+      setIsLoading(false);
+    }
   };
 
   // ----------------------------
@@ -326,6 +388,7 @@ const BTUpload = () => {
     );
   }
 
+ 
   // If Bluetooth is supported, but not yet connected
   if (!isBluetoothConnected) {
     return (
@@ -409,6 +472,11 @@ const BTUpload = () => {
                 orientation={orientation}
                 setOrientation={setOrientation}
               />
+
+
+              <p className="mt-6 font-bold text-gray-700 text-2xl">
+              Inserted coins: {availableCoins}
+              </p>
 
               <SmartPriceToggle
                 paperSize={selectedSize}

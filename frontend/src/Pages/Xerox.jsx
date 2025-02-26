@@ -36,6 +36,27 @@ const Xerox = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
+    const [availableCoins, setAvailableCoins] = useState(0);
+    
+    
+      useEffect(() => {
+        const fetchAvailableCoins = async () => {
+          const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+          try {
+            const snapshot = await get(coinRef);
+            if (snapshot.exists()) {
+              setAvailableCoins(snapshot.val());
+            } else {
+              console.error("Error retrieving available coins.");
+            }
+          } catch (error) {
+            console.error("Error fetching available coins:", error);
+          }
+        };
+      
+        fetchAvailableCoins();
+      }, []);
+
 
     const handleFileSelect = (event) => {
       const file = event.target.files[0];
@@ -126,6 +147,31 @@ const Xerox = () => {
         alert("No printer selected! Please choose a printer first.");
         return;
       }
+
+        // Fetch current available coins from Firebase
+          const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+          try {
+            const snapshot = await get(coinRef);
+            if (snapshot.exists()) {
+              availableCoins = snapshot.val();
+            } else {
+              alert("Error retrieving available coins.");
+              setIsLoading(false);
+              return;
+            }
+          } catch (error) {
+            console.error("Error fetching available coins:", error);
+            alert("Error fetching available coins.");
+            setIsLoading(false);
+            return;
+          }
+        
+          // Check if availableCoins is enough to print
+          if (availableCoins < calculatedPrice) {
+            alert("Not enough coins to proceed with printing.");
+            setIsLoading(false);
+            return;
+          }
   
       let finalFileUrlToPrint = filePreviewUrl;
   
@@ -190,8 +236,13 @@ const Xerox = () => {
           printerName: selectedPrinter,
           copies: copies,
           isColor: isColor,
+          finalPrice:calculatedPrice,
           timestamp: new Date().toISOString(),
         });
+
+        const updatedCoins = availableCoins - calculatedPrice;
+        await update(coinRef, { availableCoins: updatedCoins });
+        alert("Print job sent successfully. Coins deducted.");
   
   
         try {
@@ -258,6 +309,10 @@ const Xerox = () => {
             {/* Page Settings */}
             <div className="mt-6 space-y-4">
               <Copies copies={copies} setCopies={setCopies} />
+
+              <p className="mt-6 font-bold text-gray-700 text-2xl">
+              Inserted coins: {availableCoins}
+              </p>
 
               <SmartPriceToggle
                 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint} from "react-icons/fa";
 
@@ -12,10 +12,11 @@ import PageSize from "../components/usb/page_size";
 import Copies from "../components/usb/copies";
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
-import { getDatabase, ref as dbRef, push } from "firebase/database";
+import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
+import { degrees } from "pdf-lib";
 import mammoth from "mammoth";
 
 import { getPageIndicesToPrint } from "../utils/pageRanges"; // <-- Import your utility
@@ -40,6 +41,28 @@ const Usb = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [status , setStatus] = useState("pending");
   const [isLoading, setIsLoading] = useState(false);
+  const [availableCoins, setAvailableCoins] = useState(0);
+
+
+  useEffect(() => {
+    const fetchAvailableCoins = async () => {
+      const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+      try {
+        const snapshot = await get(coinRef);
+        if (snapshot.exists()) {
+          setAvailableCoins(snapshot.val());
+        } else {
+          console.error("Error retrieving available coins.");
+        }
+      } catch (error) {
+        console.error("Error fetching available coins:", error);
+      }
+    };
+  
+    fetchAvailableCoins();
+  }, []);
+
+
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -120,6 +143,8 @@ const Usb = () => {
     );
   };
 
+  
+
   const handlePrint = async () => {
     setIsLoading(true);
     if (!filePreviewUrl) {
@@ -130,9 +155,35 @@ const Usb = () => {
       alert("No printer selected! Please choose a printer first.");
       return;
     }
+
+      // Fetch current available coins from Firebase
+    const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+    try {
+      const snapshot = await get(coinRef);
+      if (snapshot.exists()) {
+        availableCoins = snapshot.val();
+      } else {
+        alert("Error retrieving available coins.");
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error("Error fetching available coins:", error);
+      alert("Error fetching available coins.");
+      setIsLoading(false);
+      return;
+    }
+  
+    // Check if availableCoins is enough to print
+    if (availableCoins < calculatedPrice) {
+      alert("Not enough coins to proceed with printing.");
+      
+      setIsLoading(false);
+      return;
+    }
   
     let finalFileUrlToPrint = filePreviewUrl;
-  
+
     try {
       if (fileToUpload?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
@@ -232,12 +283,14 @@ const Usb = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        isSmartPriceEnabled: isSmartPriceEnabled,
-        finalPrice: isSmartPriceEnabled ? calculatedPrice : 0,
+        finalPrice:  calculatedPrice,
         timestamp: new Date().toISOString(),
         status: status
       });
 
+      const updatedCoins = availableCoins - calculatedPrice;
+      await update(coinRef, { availableCoins: updatedCoins });
+      alert("Print job sent successfully. Coins deducted.");
 
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
@@ -320,6 +373,10 @@ const Usb = () => {
                 setOrientation={setOrientation}
               />
 
+              <p className="mt-6 font-bold text-gray-700 text-2xl">
+                Inserted coins: {availableCoins}
+              </p>
+
               <SmartPriceToggle
                 paperSize={selectedSize}
                 isColor={isColor}
@@ -336,6 +393,7 @@ const Usb = () => {
                 setCustomPageRange={setCustomPageRange}
                 filePreviewUrl = {filePreviewUrl}
               />
+             
             </div>
           </div>
 
