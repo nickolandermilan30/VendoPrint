@@ -8,6 +8,7 @@ import vectorImage1 from '../assets/Icons/Vector 1.png';
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 
 import vectorImage4 from '../assets/Icons/Vector 4.png'; 
+import { FaTimes } from "react-icons/fa";
 
 
 import M_Qrcode from './M_Qrcode';
@@ -172,18 +173,23 @@ const Printer = () => {
         </div>
       )}
 
-
       {isUsbModalOpen && (
-              <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full flex flex-col items-center">
-                  <h2 className="text-2xl font-bold mb-4">Guide</h2>
-                  <p className="mb-4">1. Please select file before insert the coin.</p>
-                  <div className="flex gap-4">
-                    <button className="bg-green-500 text-white px-6 py-3 rounded-lg" onClick={() => navigate('/usb')}>Yes</button>
-                  </div>
-                </div>
-              </div>
-            )}
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
+          <div className="bg-white p-10 rounded-lg shadow-lg max-w-lg w-full flex flex-col items-center relative">
+            <button 
+              className="absolute top-4 right-4 bg-transparent text-black-700 px-3 py-1 rounded-full"
+              onClick={() => navigate('/usb')}>
+            
+            <FaTimes className="text-2xl" />
+            </button>
+            <h2 className="text-2xl font-bold mb-4">Guide</h2>
+            <p className="mb-4">Please select file before inserting the coin.</p>
+          </div>
+        </div>
+      )}
+
+
+     
     </div>
   );
 };
