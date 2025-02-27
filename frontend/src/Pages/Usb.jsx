@@ -1,6 +1,7 @@
 import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint} from "react-icons/fa";
+import Modal from "react-modal";
 
 import CustomPage from "../components/usb/customized_page";
 import DocumentPreview from "../components/usb/document_preview";
@@ -41,12 +42,12 @@ const Usb = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [status , setStatus] = useState("pending");
   const [isLoading, setIsLoading] = useState(false);
-  const [availableCoins, setAvailableCoins] = useState(0);
+  let [availableCoins, setAvailableCoins] = useState(0);
 
 
   useEffect(() => {
     const fetchAvailableCoins = async () => {
-      const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+      const coinRef = dbRef(realtimeDb, "coinCount");
       try {
         const snapshot = await get(coinRef);
         if (snapshot.exists()) {
@@ -157,11 +158,11 @@ const Usb = () => {
     }
 
       // Fetch current available coins from Firebase
-    const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+    const coinRef = dbRef(realtimeDb, "coinCount");
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        availableCoins = snapshot.val();
+        setAvailableCoins = snapshot.val();
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);

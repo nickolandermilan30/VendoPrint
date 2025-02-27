@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint } from "react-icons/fa";
 
@@ -12,7 +12,7 @@ import PageSize from "../components/qr/page_size";
 import Copies from "../components/qr/copies";
 
 import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
-import { getDatabase, ref as dbRef, push } from "firebase/database";
+import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
@@ -39,12 +39,12 @@ const QRUpload = () => {
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [availableCoins, setAvailableCoins] = useState(0);
+  let [availableCoins, setAvailableCoins] = useState(0);
   
   
     useEffect(() => {
       const fetchAvailableCoins = async () => {
-        const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+        const coinRef = dbRef(realtimeDb, "coinCount");
         try {
           const snapshot = await get(coinRef);
           if (snapshot.exists()) {
@@ -151,11 +151,11 @@ const QRUpload = () => {
     }
 
     // Fetch current available coins from Firebase
-        const coinRef = dbRef(realtimeDb, "coins/Monday/insertedCoins");
+        const coinRef = dbRef(realtimeDb, "coinCount");
         try {
           const snapshot = await get(coinRef);
           if (snapshot.exists()) {
-            availableCoins = snapshot.val();
+            setAvailableCoins = snapshot.val();
           } else {
             alert("Error retrieving available coins.");
             setIsLoading(false);
