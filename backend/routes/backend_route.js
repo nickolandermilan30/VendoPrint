@@ -1,6 +1,6 @@
 import express from "express";
 import { addData, getData } from "../controller/firebase_controller.js";
-import UsbList from "../controller/usd_drives_controller.js";
+// import UsbList from "../controller/usd_drives_controller.js";
 // import upload from "../cloudinarry/multer_cloudinarry.js";
 import { fetchPrinters, printFile } from "../printer/printer_controller.js";
 
@@ -14,5 +14,5 @@ BackendRoutes.get("/get-files", getData);
 BackendRoutes.get("/printers", fetchPrinters);
 BackendRoutes.post("/print", printFile);
 //USB Drive
-BackendRoutes.get("/usb-files", UsbList);
+// BackendRoutes.get("/usb-files", UsbList);
 export default BackendRoutes;
