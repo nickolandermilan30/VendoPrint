@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import M_Password from '../components/M_Password'; 
-import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
 import { getDatabase, ref as dbRef, onValue }  from "firebase/database";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
+// import { realtimeDb, storage } from '../../firebase/firebase_config';
+// import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);

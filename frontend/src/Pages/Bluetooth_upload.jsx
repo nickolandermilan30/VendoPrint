@@ -11,7 +11,7 @@ import SelectColor from "../components/bluetooth/select_color";
 import PageSize from "../components/bluetooth/page_size";
 import Copies from "../components/bluetooth/copies";
 
-import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
+import { realtimeDb, storage } from "../../firebase/firebase_config";
 import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
@@ -345,7 +345,7 @@ const BTUpload = () => {
       alert("Print job sent successfully. Coins deducted.");
 
       try {
-        const response = await axios.post("http://localhost:5000/api/print", {
+        const response = await axios.post("https://vendoprint-1.onrender.com/api/print", {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
