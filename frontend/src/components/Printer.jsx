@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
 import { realtimeDb } from '../../../backend/firebase/firebase-config'; 
-import { ref, onValue, remove, update } from "firebase/database"
+import { ref, onValue,  update } from "firebase/database"
 import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
-import Modal from "react-modal";
+// import Modal from "react-modal";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
 import vectorImage3 from '../assets/Icons/Vector 3.png'; 

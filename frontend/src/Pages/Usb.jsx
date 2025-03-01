@@ -12,7 +12,7 @@ import SelectColor from "../components/usb/select_color";
 import PageSize from "../components/usb/page_size";
 import Copies from "../components/usb/copies";
 
-import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
+import { realtimeDb, storage } from "../../firebase/firebase_config";
 import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
@@ -20,7 +20,7 @@ import { PDFDocument } from "pdf-lib";
 import { degrees } from "pdf-lib";
 import mammoth from "mammoth";
 
-import { getPageIndicesToPrint } from "../utils/pageRanges"; // <-- Import your utility
+import { getPageIndicesToPrint } from "../utils/pageRanges"; 
 
 const Usb = () => {
   const navigate = useNavigate();
@@ -294,7 +294,7 @@ const Usb = () => {
       alert("Print job sent successfully. Coins deducted.");
 
       try {
-        const response = await axios.post("http://localhost:5000/api/print", {
+        const response = await axios.post("https://vendoprint-1.onrender.com/api/print", {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,

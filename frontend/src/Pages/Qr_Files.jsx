@@ -11,7 +11,7 @@ import SelectColor from "../components/qr/select_color";
 import PageSize from "../components/qr/page_size";
 import Copies from "../components/qr/copies";
 
-import { realtimeDb, storage } from "../../../backend/firebase/firebase-config";
+import { realtimeDb, storage } from "../../firebase/firebase_config";
 import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
@@ -287,7 +287,7 @@ const QRUpload = () => {
             await update(coinRef, { availableCoins: updatedCoins });
             alert("Print job sent successfully. Coins deducted.");
       try {
-        const response = await axios.post("http://localhost:5000/api/print", {
+        const response = await axios.post("https://vendoprint-1.onrender.com/api/print", {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
