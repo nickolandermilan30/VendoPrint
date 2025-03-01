@@ -23,7 +23,7 @@
     "electron-print": "^1.0.2",
     "electron-printer": "^0.0.5",
     "express": "^4.21.2",
-    "firebase": "^11.3.1",
+    "firebase": "^11.4.0",
     "firebase-admin": "^13.0.2",
     "fs": "^0.0.1-security",
     "googleapis": "^144.0.0",
