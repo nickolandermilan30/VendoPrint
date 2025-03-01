@@ -8,7 +8,7 @@ const PrinterList = ({ selectedPrinter, setSelectedPrinter }) => {
 
   useEffect(() => {
     axios
-      .get("https://vendoprint-1.onrender.com/api/printers")
+      .get("http://localhost:5000/api/printers")
       .then((response) => {
         setPrinters(response.data.printers);
       })
