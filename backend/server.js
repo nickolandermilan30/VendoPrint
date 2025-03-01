@@ -12,7 +12,7 @@ app.use(express.json({ limit: "Infinity" }));
 app.use(express.urlencoded({ limit: "Infinity", extended: true }));
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "https://vendo-print.vercel.app",
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
 }));
@@ -27,6 +27,4 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT;
-app.listen(PORT, () => {
-  console.log(`Server started at http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
