@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
-import { realtimeDb } from '../../../backend/firebase/firebase-config'; 
+import { realtimeDb} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
 import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
 // import Modal from "react-modal";
