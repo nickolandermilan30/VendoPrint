@@ -11,8 +11,8 @@ const App = () => {
   return (
     <Router>
       <Routes>
-   
-        <Route path="/" element={<Navigate to="/printer" replace />} />
+{/*    
+        <Route path="/" element={<Navigate to="/printer" replace />} /> */}
         <Route path="/" element={<Layout />}>
           <Route path="/printer" element={<Printer />} />
           <Route path="/xerox" element={<Xerox />} />
