@@ -18,7 +18,6 @@ app.use(cors({
 }));
 
 
-
 // Use default route
 app.use("/api", BackendRoutes);
 
