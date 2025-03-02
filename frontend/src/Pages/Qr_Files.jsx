@@ -60,85 +60,7 @@ const QRUpload = () => {
       fetchAvailableCoins();
     }, []);
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (!file) {
-      alert("No file selected!");
-      return;
-    }
-    setFileToUpload(file);
-
-
-    if (file.type === "application/pdf") {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const pdfData = new Uint8Array(e.target.result);
-        const pdfDoc = await PDFDocument.load(pdfData);
-        const totalPageCount = pdfDoc.getPageCount();
-        setTotalPages(totalPageCount);
-      };
-      reader.readAsArrayBuffer(file);
-    } 
-
-    else if (
-      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const arrayBuffer = e.target.result;
-        try {
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          const textLength = result.value.length;
-          
-          const estimatedPages = Math.ceil(textLength / 1000);
-          setTotalPages(estimatedPages);
-        } catch (error) {
-          console.error("Error reading docx file:", error);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-
-      setTotalPages(1);
-    }
-
-    uploadFileToFirebase(file);
-  };
-
-
-  const uploadFileToFirebase = async (file) => {
-    if (!file) {
-      alert("No file selected for upload!");
-      return;
-    }
-    const storageRef = ref(storage, `uploads/${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        console.log(
-          `Upload progress: ${
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          }%`
-        );
-      },
-      (error) => {
-        console.error("Upload failed", error);
-      },
-      async () => {
-        try {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          setFilePreviewUrl(url);
-          console.log("File available at:", url);
-          alert("File uploaded successfully!");
-        } catch (error) {
-          console.error("Error getting download URL:", error);
-        }
-      }
-    );
-  };
-
+ 
   const handlePrint = async () => {
     setIsLoading(true);
     if (!filePreviewUrl) {
@@ -320,7 +242,7 @@ const QRUpload = () => {
       {/* Main Box Container */}
       <div className="flex flex-col w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4 relative">
 
-        {/* Top Section */}
+        
         <div className="flex w-full space-x-6">
           {/* Left Side */}
           <div className="w-1/2 flex flex-col">
@@ -340,13 +262,6 @@ const QRUpload = () => {
               setSelectedPrinter={setSelectedPrinter}
             />
 
-            {/* File Upload */}
-            <p className="mt-4 text-3xl font-bold text-[#31304D]">Choose File</p>
-            <input
-              type="file"
-              onChange={handleFileSelect}
-              className="mt-4 w-full border-2 border-[#31304D] p-2"
-            />
 
             {/* Page Settings */}
             <div className="mt-6 space-y-4">
