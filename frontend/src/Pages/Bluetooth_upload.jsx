@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaPrint, FaTimes } from "react-icons/fa";
+import { ezlogo } from "../assets/Icons";
 
 import CustomPage from "../components/bluetooth/customized_page";
 import DocumentPreview from "../components/bluetooth/document_preview";
@@ -322,9 +323,12 @@ const BTUpload = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
-        Kiosk Vendo Printer
-      </h1>
+      <div className="flex items-center space-x-4 mb-6">
+        <img src={ezlogo} alt="EZ Logo" className="w-16 h-16" />
+        <h1 className="text-4xl font-bold text-[#31304D]">
+          Kiosk Vendo Printer
+        </h1>
+      </div>
 
       {showModal && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -431,6 +435,7 @@ const BTUpload = () => {
         </div>
 
        
+
         <div className="flex flex-col items-center mt-auto pt-6">
           <button
             onClick={handlePrint}

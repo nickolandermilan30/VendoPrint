@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaPrint } from 'react-icons/fa';
-
+import { ezlogo } from '../assets/Icons';
 
 import DocumentPreview from "../components/xerox/document_preview";
 import PrinterList from "../components/xerox/printerList";
@@ -270,9 +270,12 @@ const Xerox = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
-        Kiosk Vendo Printer
-      </h1>
+      <div className="flex items-center space-x-4 mb-6">
+        <img src={ezlogo} alt="EZ Logo" className="w-16 h-16" />
+        <h1 className="text-4xl font-bold text-[#31304D]">
+          Kiosk Vendo Printer
+        </h1>
+      </div>
 
       {/* Main Box Container */}
       <div className="flex flex-col w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4 relative">

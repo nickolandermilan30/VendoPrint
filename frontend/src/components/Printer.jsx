@@ -3,14 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { realtimeDb,storage} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
 import { listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
-import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
-import { docs, pdf, excel, image } from '../assets/Icons';
-// import Modal from "react-modal";
-import vectorImage1 from '../assets/Icons/Vector 1.png'; 
-import vectorImage2 from '../assets/Icons/Vector 2.png'; 
-import vectorImage3 from '../assets/Icons/Vector 3.png'; 
-import vectorImage4 from '../assets/Icons/Vector 4.png'; 
-import { FaTimes } from "react-icons/fa";
+import { 
+          ezlogo,
+          vectorImage1,
+          vectorImage2,
+          vectorImage3,
+          vectorImage4 } from '../assets/Icons';
+
+import { FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage} from "react-icons/fa";
 
 
 import M_Qrcode from './M_Qrcode';
@@ -50,25 +50,27 @@ const Printer = () => {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const storageFolderRef = storageRef(storage, "uploads/"); // Change to your folder path
+        const storageFolderRef = storageRef(storage, "uploads/"); 
         const result = await listAll(storageFolderRef);
   
         const files = await Promise.all(
-          result.items.map(async (fileRef) => {
-            const url = await getDownloadURL(fileRef);
-            return { name: fileRef.name, url };
-          })
+          result.items
+            .filter((fileRef) => !fileRef.name.endsWith(".svg")) 
+            .map(async (fileRef) => {
+              const url = await getDownloadURL(fileRef);
+              return { name: fileRef.name, url };
+            })
         );
   
-        setUploadedFiles(files);
+        setUploadedFiles(files); 
       } catch (error) {
-        console.error("Error fetching files from Firebase Storage:", error);
+       
       }
     };
   
     fetchFiles();
   }, []);
-
+  
   // Function to start printing a file
   const startPrinting = (fileId) => {
     update(ref(realtimeDb, `files/${fileId}`), { status: "Processing" });
@@ -84,22 +86,26 @@ const Printer = () => {
 
   // Function to determine the file type icon
   const getFileIcon = (fileName) => {
-    if (!fileName) return docs;
+    if (!fileName) return <FaFileWord className="text-blue-600 text-2xl" />;
     const ext = fileName.split(".").pop().toLowerCase();
 
-    if (ext === "pdf") return pdf;
-    if (["docx", "doc"].includes(ext)) return docs;
-    if (["xls", "xlsx"].includes(ext)) return excel;
-    if (["jpg", "png", "jpeg"].includes(ext)) return image;
-    return docs;
+    if (ext === "pdf") return <FaFilePdf className="text-red-600 text-2xl" />;
+    if (["docx", "doc"].includes(ext)) return <FaFileWord className="text-blue-600 text-2xl" />;
+    if (["xls", "xlsx"].includes(ext)) return <FaFileExcel className="text-green-600 text-2xl" />;
+    if (["jpg", "png", "jpeg"].includes(ext)) return <FaFileImage className="text-yellow-600 text-2xl" />;
+    
+    return <FaFileWord className="text-gray-600 text-2xl" />;
   };
   
   return (
     <div className="p-4 flex flex-col lg:flex-row items-center lg:items-start h-full min-h-screen">
       <div className="w-full lg:flex-1">
-        <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
+      <div className="flex items-center space-x-4 mb-6">
+        <img src={ezlogo} alt="EZ Logo" className="w-16 h-16" />
+        <h1 className="text-4xl font-bold text-[#31304D]">
           Kiosk Vendo Printer
         </h1>
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Xerox */}
