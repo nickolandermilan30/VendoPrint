@@ -245,7 +245,7 @@ const Xerox = () => {
   
   
         try {
-          const response = await axios.post("https://vendoprint-1.onrender.com/api/print", {
+          const response = await axios.post("http://localhost:5000/api/print", {
             printerName: selectedPrinter,
             fileUrl: finalFileUrlToPrint,
             copies: copies,
