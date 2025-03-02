@@ -48,24 +48,55 @@ const QRUpload = () => {
 
 
   
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchAvailableCoins = async () => {
+      try {
+        const snapshot = await get(dbRef(realtimeDb, "coinCount"));
+        if (snapshot.exists()) {
+          setAvailableCoins(snapshot.val());
+        }
+      } catch (error) {
+        console.error("Error fetching coins:", error);
+      }
+    };
+    fetchAvailableCoins();
+  
+    return () => controller.abort();
+  }, []);
+
     useEffect(() => {
-      const fetchAvailableCoins = async () => {
-        const coinRef = dbRef(realtimeDb, "coinCount");
+      const fetchTotalPages = async () => {
+        if (!fileName) return;
+        
+        console.log("Fetching file:", fileName); // Debugging log
+    
         try {
-          const snapshot = await get(coinRef);
-          if (snapshot.exists()) {
-            setAvailableCoins(snapshot.val());
+          if (fileName.endsWith(".pdf")) {
+            const existingPdfBytes = await fetch(fileUrl).then(res => res.arrayBuffer());
+            const pdfDoc = await PDFDocument.load(existingPdfBytes);
+            console.log("PDF Page Count:", pdfDoc.getPageCount()); // Debugging log
+            setTotalPages(pdfDoc.getPageCount());
+          } else if (fileName.endsWith(".docx")) {
+            const response = await fetch(fileUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+    
+            const estimatedPages = Math.ceil(result.value.length / 1800);
+            console.log("Estimated DOCX Page Count:", estimatedPages); // Debugging log
+            setTotalPages(estimatedPages);
           } else {
-            console.error("Error retrieving available coins.");
+            setTotalPages(1);
           }
         } catch (error) {
-          console.error("Error fetching available coins:", error);
+          console.error("Error fetching file pages:", error);
+          setTotalPages(1);
         }
       };
     
-      fetchAvailableCoins();
-    }, []);
-
+      fetchTotalPages();
+    }, [fileUrl]);
+    
  
   const handlePrint = async () => {
     setIsLoading(true);
@@ -107,7 +138,7 @@ const QRUpload = () => {
     let finalFileUrlToPrint = fileUrl;
   
     try {
-      if (fileUrl?.type === "application/pdf") {
+      if (fileName?.type === "application/pdf") {
         const existingPdfBytes = await fetch(fileUrl).then((res) =>
           res.arrayBuffer()
         );
@@ -143,7 +174,7 @@ const QRUpload = () => {
       } 
   
       else if (
-        fileUrl?.type ===
+        fileName?.type ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         const arrayBuffer = await fetch(fileUrl).then((res) =>
