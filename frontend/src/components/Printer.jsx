@@ -267,15 +267,22 @@ const Printer = () => {
 
       {isUsbModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
-          <div className="bg-white p-16 rounded-lg border-gray shadow-lg max-w-lg w-full flex flex-col items-center relative">
+          <div className="bg-white p-16 rounded-lg border-gray shadow-lg max-w-xl w-full flex flex-col items-center relative">
             <button 
               className="absolute top-4 right-4 bg-transparent text-black-700 px-3 py-1 rounded-full"
               onClick={() => navigate('/usb')}>
             
             <FaTimes className="text-2xl" />
             </button>
-            <h2 className="text-5xl font-bold mb-4">Guide</h2>
-            <p className="mb-4 text-xl font-semibold">Please select file before inserting the coin.</p>
+          <h2 className="text-5xl font-bold mb-4 text-center">
+            Guide
+          </h2>
+
+          <ul className="list-disc list-inside mb-4 text-3xl">
+            <li ><span className="font-bold text-blue-500">Please choose file to your usb drive.</span></li>
+            <li className="font-bold">Insert exact amount.</li>
+ 
+          </ul>
           </div>
         </div>
       )}
