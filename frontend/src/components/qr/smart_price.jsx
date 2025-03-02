@@ -11,7 +11,7 @@ function SmartPriceLabel({
 }) {
   useEffect(() => {
 
-    const pricePerPage = isColor ? 7.75 : 14.75;
+    const pricePerPage = isColor ? 14: 7;
     const oddPagesCount = Math.ceil(totalPages / 2);  
     const evenPagesCount = Math.floor(totalPages / 2);
 

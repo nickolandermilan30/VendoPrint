@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
-import { realtimeDb} from '../../firebase/firebase_config';
+import { realtimeDb,storage} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
+import { listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
 import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
+import { docs, pdf, excel, image } from '../assets/Icons';
 // import Modal from "react-modal";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
@@ -16,6 +18,7 @@ const Printer = () => {
   const navigate = useNavigate();     
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUsbModalOpen, setIsUsbModalOpen] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [queue, setQueue] = useState([]);
   
 
@@ -32,6 +35,8 @@ const Printer = () => {
           ...data[key],
         }));
 
+        
+
         console.log("Processed queue:", updatedQueue);
         setQueue(updatedQueue);
       } else {
@@ -40,6 +45,28 @@ const Printer = () => {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        const storageFolderRef = storageRef(storage, "uploads/"); // Change to your folder path
+        const result = await listAll(storageFolderRef);
+  
+        const files = await Promise.all(
+          result.items.map(async (fileRef) => {
+            const url = await getDownloadURL(fileRef);
+            return { name: fileRef.name, url };
+          })
+        );
+  
+        setUploadedFiles(files);
+      } catch (error) {
+        console.error("Error fetching files from Firebase Storage:", error);
+      }
+    };
+  
+    fetchFiles();
   }, []);
 
   // Function to start printing a file
@@ -156,7 +183,32 @@ const Printer = () => {
             </ul>
           )}
         </div>
+        <h2 className="text-xl font-bold">Uploaded File</h2>
+        <div className="flex-1 flex items-center justify-center w-full">
+        <div className="flex-1 w-full">
+            {uploadedFiles.length === 0 ? (
+              <p>No uploaded files</p>
+            ) : (
+              <ul className="w-full">
+                {uploadedFiles.map((file) => (
+                  <li key={file.name} className="p-2 border-b border-gray-300 flex items-center gap-2">
+                    {getFileIcon(file.name)}
+
+                    <div>
+                    <Link to={`/qr?name=${encodeURIComponent(file.name)}&url=${encodeURIComponent(file.url)}`} className="text-dark text-sm">
+                      <p><strong>Name:</strong> {file.name}</p>
+                    </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        
+        </div>
       </div>
+
+      
       
       {/* Modal for QR */}
       {isModalOpen && (

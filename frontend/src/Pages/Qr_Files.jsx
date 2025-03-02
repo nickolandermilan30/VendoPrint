@@ -18,15 +18,20 @@ import axios from "axios";
 import { PDFDocument } from "pdf-lib";
 import mammoth from "mammoth";
 
+import { useLocation } from "react-router-dom";
+
 import { getPageIndicesToPrint } from "../utils/pageRanges";
 
 const QRUpload = () => {
   const navigate = useNavigate();
 
-  // File states
-  const [filePreviewUrl, setFilePreviewUrl] = useState("");
-  const [fileToUpload, setFileToUpload] = useState(null);
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const fileName = queryParams.get("name");
+  const fileUrl = queryParams.get("url");
 
+  // File states
+ 
   // Print settings states
   const [selectedPrinter, setSelectedPrinter] = useState("");
   const [copies, setCopies] = useState(1);
@@ -40,7 +45,8 @@ const QRUpload = () => {
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   let [availableCoins, setAvailableCoins] = useState(0);
-  
+
+
   
     useEffect(() => {
       const fetchAvailableCoins = async () => {
@@ -63,7 +69,7 @@ const QRUpload = () => {
  
   const handlePrint = async () => {
     setIsLoading(true);
-    if (!filePreviewUrl) {
+    if (!fileUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
     }
@@ -98,11 +104,11 @@ const QRUpload = () => {
     }
   
   
-    let finalFileUrlToPrint = filePreviewUrl;
+    let finalFileUrlToPrint = fileUrl;
   
     try {
-      if (fileToUpload?.type === "application/pdf") {
-        const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
+      if (fileUrl?.type === "application/pdf") {
+        const existingPdfBytes = await fetch(fileUrl).then((res) =>
           res.arrayBuffer()
         );
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -111,6 +117,7 @@ const QRUpload = () => {
           totalPages,
           selectedPageOption,
           customPageRange,
+          orientation
         });
   
         if (indicesToKeep.length === 0) {
@@ -131,20 +138,15 @@ const QRUpload = () => {
         const newPdfBytes = await newPdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
   
-        const timeStamp = Date.now();
-        const newPdfName = `processed-${timeStamp}.pdf`;
-        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-  
-        await uploadBytesResumable(storageRef2, newPdfBlob);
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl;
+        const timeStamp = Date.now()
+        finalFileUrlToPrint = fileUrl;
       } 
   
       else if (
-        fileToUpload?.type ===
+        fileUrl?.type ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
-        const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
+        const arrayBuffer = await fetch(fileUrl).then((res) =>
           res.arrayBuffer()
         );
         const pdfDoc = await PDFDocument.create();
@@ -171,13 +173,7 @@ const QRUpload = () => {
 
 
         const timeStamp = Date.now();
-        const newPdfName = `partial-pages-${timeStamp}.pdf`;
-        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-
-        await uploadBytesResumable(storageRef2, newPdfBlob);
-
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl
+        finalFileUrlToPrint = fileUrl
       } 
 
       else {
@@ -190,7 +186,7 @@ const QRUpload = () => {
  
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
-        fileName: fileToUpload?.name,
+        fileName: fileName,
         fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
@@ -308,8 +304,8 @@ const QRUpload = () => {
           {/* Right Side - File Preview */}
           <div className="w-full">
             <DocumentPreview
-              fileUrl={filePreviewUrl}
-              fileName={fileToUpload?.name}
+              fileUrl={fileUrl}
+              fileName={fileName}
             />
           </div>
         </div>
