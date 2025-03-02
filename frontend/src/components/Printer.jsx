@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
 import { realtimeDb} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
-import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
+import { docs, pdf, excel, image } from '../assets/Icons';
 // import Modal from "react-modal";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
@@ -57,19 +57,14 @@ const Printer = () => {
 
   // Function to determine the file type icon
   const getFileIcon = (fileName) => {
-    if (!fileName) return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon
-  
-    const ext = fileName.split(".").pop().toLowerCase(); // Get file extension
-  
-    if (ext === "pdf") {
-      return <FaFilePdf className="text-red-500 text-2xl" />; // PDF icon
-    } else if (ext === "docx" || ext === "doc") {
-      return <FaFileWord className="text-blue-500 text-2xl" />; // DOCX icon
-    } else if (ext === "jpg" || ext === "png" || ext === "jpeg") {
-      return <FaFileImage className="text-green-500 text-2xl" />; // Image icon
-    } else {
-      return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon for unknown files
-    }
+    if (!fileName) return docs;
+    const ext = fileName.split(".").pop().toLowerCase();
+
+    if (ext === "pdf") return pdf;
+    if (["docx", "doc"].includes(ext)) return docs;
+    if (["xls", "xlsx"].includes(ext)) return excel;
+    if (["jpg", "png", "jpeg"].includes(ext)) return image;
+    return docs;
   };
   
   return (
@@ -176,15 +171,15 @@ const Printer = () => {
 
       {isUsbModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
-          <div className="bg-white p-10 rounded-lg shadow-lg max-w-lg w-full flex flex-col items-center relative">
+          <div className="bg-white p-16 rounded-lg border-gray shadow-lg max-w-lg w-full flex flex-col items-center relative">
             <button 
               className="absolute top-4 right-4 bg-transparent text-black-700 px-3 py-1 rounded-full"
-              onClick={() => navigate('/qr-upload')}>
+              onClick={() => navigate('/usb')}>
             
             <FaTimes className="text-2xl" />
             </button>
-            <h2 className="text-2xl font-bold mb-4">Guide</h2>
-            <p className="mb-4">Please select file before inserting the coin.</p>
+            <h2 className="text-5xl font-bold mb-4">Guide</h2>
+            <p className="mb-4 text-xl font-semibold">Please select file before inserting the coin.</p>
           </div>
         </div>
       )}

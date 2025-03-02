@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPrint } from "react-icons/fa";
+import { FaArrowLeft, FaPrint, FaTimes } from "react-icons/fa";
 
 import CustomPage from "../components/bluetooth/customized_page";
 import DocumentPreview from "../components/bluetooth/document_preview";
@@ -12,7 +12,7 @@ import PageSize from "../components/bluetooth/page_size";
 import Copies from "../components/bluetooth/copies";
 
 import { realtimeDb, storage } from "../../firebase/firebase_config";
-import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
+import { ref as dbRef, push, get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
@@ -23,23 +23,11 @@ import { getPageIndicesToPrint } from "../utils/pageRanges";
 const BTUpload = () => {
   const navigate = useNavigate();
 
-  // ----------------------------
-  // 1) Bluetooth states
-  // ----------------------------
-  const [isBluetoothSupported, setIsBluetoothSupported] = useState(true);
-  const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
-  const [bluetoothDevice, setBluetoothDevice] = useState(null);
-  
 
-  // ----------------------------
-  // 2) File states
-  // ----------------------------
   const [filePreviewUrl, setFilePreviewUrl] = useState("");
   const [fileToUpload, setFileToUpload] = useState(null);
 
-  // ----------------------------
-  // 3) Print settings states
-  // ----------------------------
+
   const [selectedPrinter, setSelectedPrinter] = useState("");
   const [copies, setCopies] = useState(1);
   const [selectedSize, setSelectedSize] = useState("Letter 8.5 x 11");
@@ -53,70 +41,38 @@ const BTUpload = () => {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  let [availableCoins, setAvailableCoins] = useState(0);
-  
-  
-    useEffect(() => {
-      const fetchAvailableCoins = async () => {
-        const coinRef = dbRef(realtimeDb, "coinCount");
-        try {
-          const snapshot = await get(coinRef);
-          if (snapshot.exists()) {
-            setAvailableCoins(snapshot.val());
-          } else {
-            console.error("Error retrieving available coins.");
-          }
-        } catch (error) {
-          console.error("Error fetching available coins:", error);
-        }
-      };
-    
-      fetchAvailableCoins();
-    }, []);
+  const [availableCoins, setAvailableCoins] = useState(0);
 
-  // ----------------------------
-  // Check if Bluetooth is supported by the browser
-  // ----------------------------
   useEffect(() => {
-    if (!("bluetooth" in navigator)) {
-      setIsBluetoothSupported(false);
-    }
+    const fetchAvailableCoins = async () => {
+      const coinRef = dbRef(realtimeDb, "coinCount");
+      try {
+        const snapshot = await get(coinRef);
+        if (snapshot.exists()) {
+          setAvailableCoins(snapshot.val());
+        } else {
+          console.error("Error retrieving available coins.");
+        }
+      } catch (error) {
+        console.error("Error fetching available coins:", error);
+      }
+    };
+    fetchAvailableCoins();
   }, []);
 
-  // ----------------------------
-  // 4) Bluetooth connect logic
-  // ----------------------------
-  const handleBluetoothConnect = async () => {
-    if (!isBluetoothSupported) return;
-  
-    try {
-      console.log("Requesting Bluetooth device...");
-  
-      const device = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true, // Allows any Bluetooth device
-        optionalServices: ["battery_service"], // Optional service
-      });
-  
-      console.log(`Found device: ${device.name}`);
-  
-      // Connect to GATT Server
-      const server = await device.gatt.connect();
-      console.log("Connected to GATT Server!");
-  
-      // Save connection state
-      setBluetoothDevice(device);
-      setIsBluetoothConnected(true);
-  
-      alert(`Connected to Bluetooth device: ${device.name}`);
-    } catch (error) {
-      console.error("Bluetooth connection failed:", error);
-      alert("Failed to connect to Bluetooth device. Please try again.");
-    }
+
+  const [showModal, setShowModal] = useState(false);
+
+
+  useEffect(() => {
+    setShowModal(true);
+  }, []);
+
+  const closeModal = () => {
+    setShowModal(false);
   };
 
-  // ----------------------------
-  // 5) File Upload Handling
-  // ----------------------------
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (!file) {
@@ -125,7 +81,7 @@ const BTUpload = () => {
     }
     setFileToUpload(file);
 
-
+    // If PDF, get total pages
     if (file.type === "application/pdf") {
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -135,7 +91,9 @@ const BTUpload = () => {
         setTotalPages(totalPageCount);
       };
       reader.readAsArrayBuffer(file);
-    } else if (
+    }
+
+    else if (
       file.type ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
@@ -145,7 +103,6 @@ const BTUpload = () => {
         try {
           const result = await mammoth.extractRawText({ arrayBuffer });
           const textLength = result.value.length;
-
           const estimatedPages = Math.ceil(textLength / 1000);
           setTotalPages(estimatedPages);
         } catch (error) {
@@ -154,11 +111,10 @@ const BTUpload = () => {
       };
       reader.readAsArrayBuffer(file);
     } else {
-
       setTotalPages(1);
     }
 
-    // Actually upload to Firebase
+
     uploadFileToFirebase(file);
   };
 
@@ -195,26 +151,26 @@ const BTUpload = () => {
     );
   };
 
-  // ----------------------------
-  // 6) Print Handler
-  // ----------------------------
+
   const handlePrint = async () => {
     setIsLoading(true);
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
+      setIsLoading(false);
       return;
     }
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
+      setIsLoading(false);
       return;
     }
 
-      // Fetch current available coins from Firebase
+   
     const coinRef = dbRef(realtimeDb, "coinCount");
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        setAvailableCoins = snapshot.val();
+        setAvailableCoins(snapshot.val());
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);
@@ -226,56 +182,57 @@ const BTUpload = () => {
       setIsLoading(false);
       return;
     }
-  
-    // Check if availableCoins is enough to print
+
     if (availableCoins < calculatedPrice) {
       alert("Not enough coins to proceed with printing.");
       setIsLoading(false);
       return;
     }
-  
+
     let finalFileUrlToPrint = filePreviewUrl;
 
     try {
+   
       if (fileToUpload?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
         );
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
-  
+
         const indicesToKeep = getPageIndicesToPrint({
           totalPages,
           selectedPageOption,
           customPageRange,
         });
-  
+
         if (indicesToKeep.length === 0) {
           alert("No pages selected based on your page option!");
+          setIsLoading(false);
           return;
         }
-  
+
         const newPdfDoc = await PDFDocument.create();
         const copiedPages = await newPdfDoc.copyPages(pdfDoc, indicesToKeep);
-  
+
         copiedPages.forEach((page) => {
           if (orientation === "Landscape") {
-            page.setRotation(degrees(90)); // Rotate page if landscape
+            page.setRotation(90 * (Math.PI / 180));
           }
           newPdfDoc.addPage(page);
         });
-  
+
         const newPdfBytes = await newPdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
-  
+
         const timeStamp = Date.now();
         const newPdfName = `processed-${timeStamp}.pdf`;
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-  
+
         await uploadBytesResumable(storageRef2, newPdfBlob);
         const newUrl = await getDownloadURL(storageRef2);
         finalFileUrlToPrint = newUrl;
-      } 
-  
+      }
+   
       else if (
         fileToUpload?.type ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -285,48 +242,41 @@ const BTUpload = () => {
         );
         const pdfDoc = await PDFDocument.create();
         const extractedText = await mammoth.extractRawText({ arrayBuffer });
-  
-        const page = pdfDoc.addPage([612, 792]); // Default Letter size
+
+        const page = pdfDoc.addPage([612, 792]);
         const { width, height } = page.getSize();
-  
+
         if (orientation === "Landscape") {
-          page.setRotation(degrees(90));
+          page.setRotation(90 * (Math.PI / 180));
         }
-  
+
         page.drawText(extractedText.value, {
           x: 50,
           y: height - 50,
           size: 12,
         });
 
- 
-        const newPdfBytes = await newPdfDoc.save();
-
+        const newPdfBytes = await pdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
-
 
         const timeStamp = Date.now();
         const newPdfName = `partial-pages-${timeStamp}.pdf`;
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
 
         await uploadBytesResumable(storageRef2, newPdfBlob);
-
         const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl
-      } 
-
-      else {
-      
+        finalFileUrlToPrint = newUrl;
+      } else {
+    
         if (selectedPageOption !== "All") {
           alert("Partial page selection is only supported for PDF right now.");
         }
       }
 
- 
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
-        fileUrl: finalFileUrlToPrint, 
+        fileUrl: finalFileUrlToPrint,
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -335,13 +285,15 @@ const BTUpload = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        finalPrice:  calculatedPrice,
+        finalPrice: calculatedPrice,
         timestamp: new Date().toISOString(),
-        status: status
+        status: "queued",
       });
 
+     
       const updatedCoins = availableCoins - calculatedPrice;
       await update(coinRef, { availableCoins: updatedCoins });
+
       alert("Print job sent successfully. Coins deducted.");
 
       try {
@@ -359,73 +311,52 @@ const BTUpload = () => {
       } catch (err) {
         console.error("Print job error:", err);
       }
-
     } catch (error) {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
-    } finally{
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // ----------------------------
-  // 7) Conditional Rendering
-  // ----------------------------
-  // If Bluetooth not supported
-  if (!isBluetoothSupported) {
-    return (
-      <div className="p-4">
-        <button
-          className="w-10 h-10 bg-gray-200 text-[#31304D] flex items-center justify-center rounded-lg border-2 border-[#31304D] mr-4 mb-4"
-          onClick={() => navigate(-1)}
-        >
-          <FaArrowLeft className="text-2xl text-[#31304D]" />
-        </button>
-        <h2 className="text-3xl font-bold text-red-600">
-          Bluetooth is not supported on this browser.
-        </h2>
-      </div>
-    );
-  }
 
- 
-  // If Bluetooth is supported, but not yet connected
-  if (!isBluetoothConnected) {
-    return (
-      <div className="p-4 flex flex-col items-center justify-center">
-        <button
-          className="w-10 h-10 bg-gray-200 text-[#31304D] flex items-center justify-center rounded-lg border-2 border-[#31304D] mr-4 self-start"
-          onClick={() => navigate(-1)}
-        >
-          <FaArrowLeft className="text-2xl text-[#31304D]" />
-        </button>
-        <div className="mt-10 flex flex-col border px-13 py-13 rounded-2xl items-center">
-          <h2 className="text-3xl font-bold text-[#31304D] mb-6">
-            Connect a Bluetooth Device
-          </h2>
-          <button
-            onClick={handleBluetoothConnect}
-            className="px-6 py-3 bg-gray-600 text-white text-xl font-bold rounded-lg"
-          >
-            Connect via Bluetooth
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // If connected, show the regular upload + print UI
   return (
     <div className="p-4">
       <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
-        Kiosk Vendo Printer (Bluetooth Connected)
+        Kiosk Vendo Printer
       </h1>
 
-      {/* Main Box Container */}
+      {showModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-8 rounded-md shadow-md relative  max-w-full">
+          {/* Close Button */}
+          <button
+            onClick={closeModal}
+            className="absolute top-2 right-2 text-2xl font-bold hover:text-red-600"
+          >
+            &times;
+          </button>
+
+          <h2 className="text-4xl font-bold mb-4 text-center">
+            Guide
+          </h2>
+
+          <ul className="list-disc list-inside mb-4 text-2xl">
+            <li ><span className="font-bold text-blue-500">Please send your file via Bluetooth Vendo Print.</span></li>
+            <li className="font-bold">Insert exact amount.</li>
+            <li className="font-semibold">Once your file is transferred, select or browse it below to upload.</li>
+ 
+          </ul>
+        </div>
+      </div>
+    )}
+
+
+     
       <div className="flex flex-col w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4 relative">
-        {/* Top Section */}
+      
         <div className="flex w-full space-x-6">
-          {/* Left Side */}
+       
           <div className="w-1/2 flex flex-col">
             <div className="flex items-center">
               <button
@@ -439,13 +370,12 @@ const BTUpload = () => {
               </p>
             </div>
 
-            {/* Printer List */}
             <PrinterList
               selectedPrinter={selectedPrinter}
               setSelectedPrinter={setSelectedPrinter}
             />
 
-            {/* File Upload */}
+      
             <p className="mt-4 text-3xl font-bold text-[#31304D]">Choose File</p>
             <input
               type="file"
@@ -453,7 +383,7 @@ const BTUpload = () => {
               className="mt-4 w-full border-2 border-[#31304D] p-2"
             />
 
-            {/* Page Settings */}
+
             <div className="mt-6 space-y-4">
               <Copies copies={copies} setCopies={setCopies} />
               <PageSize
@@ -473,9 +403,8 @@ const BTUpload = () => {
                 setOrientation={setOrientation}
               />
 
-
               <p className="mt-6 font-bold text-gray-700 text-2xl">
-              Inserted coins: {availableCoins}
+                Inserted coins: {availableCoins}
               </p>
 
               <SmartPriceToggle
@@ -496,22 +425,20 @@ const BTUpload = () => {
             </div>
           </div>
 
-          {/* Right Side - File Preview */}
           <div className="w-full">
-            <DocumentPreview
-              fileUrl={filePreviewUrl}
-              fileName={fileToUpload?.name}
-            />
+            <DocumentPreview fileUrl={filePreviewUrl} fileName={fileToUpload?.name} />
           </div>
         </div>
 
-
+       
         <div className="flex flex-col items-center mt-auto pt-6">
           <button
             onClick={handlePrint}
-            className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+            disabled={isLoading}
+            className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center disabled:opacity-50"
           >
-            Print <FaPrint className="ml-2 text-white" />
+            {isLoading ? "Printing..." : "Print"}
+            <FaPrint className="ml-2 text-white" />
           </button>
         </div>
       </div>
