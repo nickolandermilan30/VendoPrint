@@ -157,7 +157,7 @@ const Printer = () => {
           )}
         </div>
       </div>
-
+      
       {/* Modal for QR */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
