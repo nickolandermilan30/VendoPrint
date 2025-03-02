@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
 import { realtimeDb,storage} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
-import { listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
+import { deleteObject, listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
+
 import { 
           ezlogo,
           vectorImage1,
@@ -70,6 +71,37 @@ const Printer = () => {
   
     fetchFiles();
   }, []);
+  
+  //Function to delete 
+  const clearAllFiles = async () => {
+    if (!window.confirm("Are you sure you want to clear all files? This action cannot be undone.")) {
+      return;
+    }
+  
+    try {
+      // Reference to the "uploads" folder in Firebase Storage
+      const storageFolderRef = storageRef(storage, "uploads/");
+      const result = await listAll(storageFolderRef);
+  
+      // Delete each file in Firebase Storage
+      await Promise.all(
+        result.items.map(async (fileRef) => {
+          await deleteObject(fileRef);
+        })
+      );
+  
+      // Clear files from Realtime Database
+      await update(ref(realtimeDb, "files"), {});
+  
+      // Update state
+      setQueue([]);
+      setUploadedFiles([]);
+  
+      console.log("✅ All files deleted successfully!");
+    } catch (error) {
+      console.error("❌ Error clearing files:", error);
+    }
+  };
   
   // Function to start printing a file
   const startPrinting = (fileId) => {
@@ -186,7 +218,7 @@ const Printer = () => {
         </div>
         <h2 className="text-xl font-bold">Uploaded File</h2>
         <div className="flex-1 flex items-center justify-center w-full">
-        <div className="flex-1 w-full">
+        <div >
             {uploadedFiles.length === 0 ? (
               <p>No uploaded files</p>
             ) : (
@@ -207,6 +239,12 @@ const Printer = () => {
           </div>
         
         </div>
+        <button 
+    onClick={clearAllFiles} 
+    className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
+  >
+    Clear Files
+  </button>
       </div>
 
       
