@@ -157,7 +157,7 @@ const Printer = () => {
           )}
         </div>
       </div>
-
+      
       {/* Modal for QR */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
@@ -179,7 +179,7 @@ const Printer = () => {
           <div className="bg-white p-10 rounded-lg shadow-lg max-w-lg w-full flex flex-col items-center relative">
             <button 
               className="absolute top-4 right-4 bg-transparent text-black-700 px-3 py-1 rounded-full"
-              onClick={() => navigate('/usb')}>
+              onClick={() => navigate('/qr-upload')}>
             
             <FaTimes className="text-2xl" />
             </button>
