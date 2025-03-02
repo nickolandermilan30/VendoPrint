@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";  
 import { realtimeDb} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
-import { FaFilePdf, FaFileWord, FaFileAlt,FaFileImage  } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
+import { docs, pdf, excel, image } from '../assets/Icons';
+import { Storage } from 'firebase-admin/storage';
+
+
 // import Modal from "react-modal";
 import vectorImage1 from '../assets/Icons/Vector 1.png'; 
 import vectorImage2 from '../assets/Icons/Vector 2.png'; 
@@ -17,8 +21,10 @@ const Printer = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUsbModalOpen, setIsUsbModalOpen] = useState(false);
   const [queue, setQueue] = useState([]);
-  
+  const location = useLocation();
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  
   useEffect(() => {
     const queueRef = ref(realtimeDb, "files");
 
@@ -57,18 +63,18 @@ const Printer = () => {
 
   // Function to determine the file type icon
   const getFileIcon = (fileName) => {
-    if (!fileName) return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon
+    if (!fileName) return <FaFileAlt className="text-gray-500 text-2xl" />; 
   
-    const ext = fileName.split(".").pop().toLowerCase(); // Get file extension
+    const ext = fileName.split(".").pop().toLowerCase(); 
   
     if (ext === "pdf") {
-      return <FaFilePdf className="text-red-500 text-2xl" />; // PDF icon
+      return <FaFilePdf className="text-red-500 text-2xl" />; 
     } else if (ext === "docx" || ext === "doc") {
-      return <FaFileWord className="text-blue-500 text-2xl" />; // DOCX icon
+      return <FaFileWord className="text-blue-500 text-2xl" />; 
     } else if (ext === "jpg" || ext === "png" || ext === "jpeg") {
-      return <FaFileImage className="text-green-500 text-2xl" />; // Image icon
+      return <FaFileImage className="text-green-500 text-2xl" />; 
     } else {
-      return <FaFileAlt className="text-gray-500 text-2xl" />; // Default icon for unknown files
+      return <FaFileAlt className="text-gray-500 text-2xl" />; 
     }
   };
   
@@ -126,7 +132,7 @@ const Printer = () => {
 
 
       <div className="w-full lg:w-80 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
-        <h2 className="text-xl font-bold">Printer Queue</h2>
+        <h2 className="text-xl font-bold">Files</h2>
         <div className="flex-1 flex items-center justify-center w-full">
         {queue.length === 0 ? (
             <p>No files in the queue</p>
