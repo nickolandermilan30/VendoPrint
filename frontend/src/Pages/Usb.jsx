@@ -20,12 +20,15 @@ import { PDFDocument } from "pdf-lib";
 import { degrees } from "pdf-lib";
 import mammoth from "mammoth";
 
-import { getPageIndicesToPrint } from "../utils/pageRanges"; 
+import { getPageIndicesToPrint } from "../utils/pageRanges";
+
 
 const Usb = () => {
   const navigate = useNavigate();
 
   // File states
+ 
+
   const [filePreviewUrl, setFilePreviewUrl] = useState("");
   const [fileToUpload, setFileToUpload] = useState(null);
 
