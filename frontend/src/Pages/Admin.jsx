@@ -4,11 +4,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import M_Password from '../components/M_Password'; 
 import { getDatabase, ref as dbRef, onValue }  from "firebase/database";
 
-// import { realtimeDb, storage } from '../../firebase/firebase_config';
-// import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-
-
-// Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 const Admin = () => {
@@ -20,7 +15,7 @@ const Admin = () => {
 
   useEffect(() => {
     const db = getDatabase();
-    const coinsRef = dbRef(db, 'coinCount'); // Adjust path according to your database structure
+    const coinsRef = dbRef(db, 'coinCount'); 
 
     onValue(coinsRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -32,8 +27,8 @@ const Admin = () => {
       }
     });
 
- // Fetch Daily Print Counts (Summing totalPages per day)
- const printsRef = dbRef(db, 'files'); // Adjust path if needed
+
+ const printsRef = dbRef(db, 'files'); 
  onValue(printsRef, (snapshot) => {
    if (snapshot.exists()) {
      const data = snapshot.val();
@@ -41,7 +36,7 @@ const Admin = () => {
 
      Object.values(data).forEach(print => {
        if (print.timestamp && print.totalPages) {
-         const date = new Date(print.timestamp).toLocaleDateString('en-US', { weekday: 'long' }); // Convert timestamp to day name
+         const date = new Date(print.timestamp).toLocaleDateString('en-US', { weekday: 'long' }); 
          dailyPrintsMap[date] = (dailyPrintsMap[date] || 0) + print.totalPages;
        }
      });
