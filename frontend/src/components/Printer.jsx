@@ -36,7 +36,7 @@ const Printer = () => {
   useEffect(() => {
     console.log("From FileUpload:", uploadedFileName, uploadedFileUrl, uploadedFileTotalPages);
     
-    const queueRef = ref(realtimeDb, "uploadedFiles");
+    const queueRef = ref(realtimeDb, "files");
 
     const unsubscribe = onValue(queueRef, (snapshot) => {
       const data = snapshot.val();
