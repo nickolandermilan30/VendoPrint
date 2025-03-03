@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from "react-router-dom";  
+import { Link, useNavigate, useLocation } from "react-router-dom";  
 import { realtimeDb,storage} from '../../firebase/firebase_config';
 import { ref, onValue,  update } from "firebase/database"
 import { deleteObject, listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
@@ -16,7 +16,17 @@ import { FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage} from "react-i
 
 import M_Qrcode from './M_Qrcode';
 const Printer = () => {
+
   const navigate = useNavigate();     
+  const location = useLocation();
+  
+  const {
+    fileName: uploadedFileName,
+    fileUrl: uploadedFileUrl,
+    totalPages: uploadedFileTotalPages
+  } = location.state || {};
+
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUsbModalOpen, setIsUsbModalOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -24,6 +34,8 @@ const Printer = () => {
   
 
   useEffect(() => {
+    console.log("From FileUpload:", uploadedFileName, uploadedFileUrl, uploadedFileTotalPages);
+    
     const queueRef = ref(realtimeDb, "files");
 
     const unsubscribe = onValue(queueRef, (snapshot) => {
@@ -228,9 +240,14 @@ const Printer = () => {
                     {getFileIcon(file.name)}
 
                     <div>
-                    <Link to={`/qr?name=${encodeURIComponent(file.name)}&url=${encodeURIComponent(file.url)}`} className="text-dark text-sm">
-                      <p><strong>Name:</strong> {file.name}</p>
-                    </Link>
+                    <Link 
+                    to={`/qr?name=${encodeURIComponent(uploadedFileName || file.name)}&url=${encodeURIComponent(uploadedFileUrl || file.url)}&pages=${encodeURIComponent(uploadedFileTotalPages)}`}
+                    className="text-dark text-sm"
+                  >
+                    <p><strong>Name:</strong> {uploadedFileName || file.name}</p>
+                  </Link>
+
+
                     </div>
                   </li>
                 ))}
@@ -240,11 +257,11 @@ const Printer = () => {
         
         </div>
         <button 
-    onClick={clearAllFiles} 
-    className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
-  >
-    Clear Files
-  </button>
+          onClick={clearAllFiles} 
+          className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
+        >
+          Clear Files
+        </button>
       </div>
 
       

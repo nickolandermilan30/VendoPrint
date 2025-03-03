@@ -30,7 +30,7 @@ const QRUpload = () => {
   const queryParams = new URLSearchParams(location.search);
   const fileName = queryParams.get("name");
   const fileUrl = queryParams.get("url");
-
+  const pagesParam = queryParams.get("pages");
   // File states
  
   // Print settings states
@@ -41,7 +41,15 @@ const QRUpload = () => {
   const [orientation, setOrientation] = useState("Portrait");
   const [selectedPageOption, setSelectedPageOption] = useState("All");
   const [customPageRange, setCustomPageRange] = useState("");
-  const [totalPages, setTotalPages] = useState(1);
+
+  localStorage.setItem("totalPages", totalPages);
+
+  const storedPages = localStorage.getItem("totalPages");
+
+  const [totalPages, setTotalPages] = useState(() => {
+    return pagesParam ? parseInt(pagesParam, 10) : 1;
+  });
+  
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
