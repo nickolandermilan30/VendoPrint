@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from "react-router-dom";  
+import { Link, useNavigate, useLocation } from "react-router-dom";  
 import { realtimeDb,storage} from '../../firebase/firebase_config';
-import { ref, onValue,  update } from "firebase/database"
+import { ref, onValue,  update, remove } from "firebase/database"
 import { deleteObject, listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
 
 import { 
@@ -16,7 +16,17 @@ import { FaTimes, FaFilePdf, FaFileWord, FaFileExcel, FaFileImage} from "react-i
 
 import M_Qrcode from './M_Qrcode';
 const Printer = () => {
+
   const navigate = useNavigate();     
+  const location = useLocation();
+  
+  const {
+    fileName: uploadedFileName,
+    fileUrl: uploadedFileUrl,
+    totalPages: uploadedFileTotalPages
+  } = location.state || {};
+
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUsbModalOpen, setIsUsbModalOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -24,6 +34,8 @@ const Printer = () => {
   
 
   useEffect(() => {
+    console.log("From FileUpload:", uploadedFileName, uploadedFileUrl, uploadedFileTotalPages);
+    
     const queueRef = ref(realtimeDb, "files");
 
     const unsubscribe = onValue(queueRef, (snapshot) => {
@@ -49,51 +61,45 @@ const Printer = () => {
   }, []);
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const storageFolderRef = storageRef(storage, "uploads/"); 
-        const result = await listAll(storageFolderRef);
-  
-        const files = await Promise.all(
-          result.items
-            .filter((fileRef) => !fileRef.name.endsWith(".svg")) 
-            .map(async (fileRef) => {
-              const url = await getDownloadURL(fileRef);
-              return { name: fileRef.name, url };
-            })
-        );
-  
-        setUploadedFiles(files); 
-      } catch (error) {
-       
-      }
+    const fetchFiles = () => {
+      const queueRef = ref(realtimeDb, "uploadedFiles"); // Reference to 'uploadedFiles' in Realtime DB
+
+      onValue(queueRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const filesArray = Object.keys(data).map((key) => ({
+            id: key, // Unique Firebase key
+            ...data[key], // Spread file data (name, URL, totalPages)
+          }));
+          setUploadedFiles(filesArray);
+        } else {
+          setUploadedFiles([]); 
+        }
+      });
     };
-  
+
     fetchFiles();
   }, []);
   
-  //Function to delete 
   const clearAllFiles = async () => {
     if (!window.confirm("Are you sure you want to clear all files? This action cannot be undone.")) {
       return;
     }
   
     try {
-      // Reference to the "uploads" folder in Firebase Storage
+
       const storageFolderRef = storageRef(storage, "uploads/");
       const result = await listAll(storageFolderRef);
   
-      // Delete each file in Firebase Storage
       await Promise.all(
-        result.items.map(async (fileRef) => {
-          await deleteObject(fileRef);
-        })
+        result.items.map((fileRef) => deleteObject(fileRef))
       );
   
-      // Clear files from Realtime Database
-      await update(ref(realtimeDb, "files"), {});
+    
+      await remove(ref(realtimeDb, "files"));
+      await remove(ref(realtimeDb, "uploadedFiles"));
   
-      // Update state
+      
       setQueue([]);
       setUploadedFiles([]);
   
@@ -216,36 +222,41 @@ const Printer = () => {
             </ul>
           )}
         </div>
-        <h2 className="text-xl font-bold">Uploaded File</h2>
-        <div className="flex-1 flex items-center justify-center w-full">
-        <div >
-            {uploadedFiles.length === 0 ? (
-              <p>No uploaded files</p>
-            ) : (
-              <ul className="w-full">
-                {uploadedFiles.map((file) => (
-                  <li key={file.name} className="p-2 border-b border-gray-300 flex items-center gap-2">
-                    {getFileIcon(file.name)}
+        <h2 className="text-xl font-bold">Uploaded Files</h2>
+      <div className="flex-1 flex items-center justify-center w-full">
+        <div>
+          {uploadedFiles.length === 0 ? (
+            <p>No uploaded files</p>
+          ) : (
+            <ul className="w-full">
+              {uploadedFiles.map((file) => (
+                <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
+                  {/* File Icon Placeholder (Replace with getFileIcon if you have it) */}
+                  <span>📄</span>  
 
-                    <div>
-                    <Link to={`/qr?name=${encodeURIComponent(file.name)}&url=${encodeURIComponent(file.url)}`} className="text-dark text-sm">
-                      <p><strong>Name:</strong> {file.name}</p>
+                  <div>
+                    <Link
+                      to={`/qr?name=${encodeURIComponent(file.fileName)}&url=${encodeURIComponent(file.fileUrl)}&pages=${encodeURIComponent(file.totalPages)}`}
+                      className="text-dark text-sm"
+                    >
+                      <p><strong>Name:</strong> {file.fileName}</p>
                     </Link>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <button 
-    onClick={clearAllFiles} 
-    className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
-  >
-    Clear Files
-  </button>
       </div>
+
+      {/* Clear All Files Button */}
+      <button 
+        onClick={clearAllFiles} 
+        className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
+      >
+        Clear Files
+      </button>
+    </div>
 
       
       

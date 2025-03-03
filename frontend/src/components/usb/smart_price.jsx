@@ -60,7 +60,7 @@ if (!filePreviewUrl){
     <div className="mt-8 flex items-center space-x-4 w-full">
       <h1 className="font-bold text-gray-700 text-2xl">Smart Price:</h1>
       <span className="text-lg font-bold text-green-600">
-        ₱{calculatedPrice.toFixed(2)}
+      ₱{calculatedPrice ? calculatedPrice.toFixed(2) : "0.00"}
       </span>
     </div>
   );

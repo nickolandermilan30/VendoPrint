@@ -15,10 +15,23 @@ const M_Password = ({ closeModal }) => {
     }
   };
 
+  const handleClose = () => {
+
+      navigate('/printer'); 
+
+  };
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-opacity-30 backdrop-blur-sm z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-xl font-semibold text-[#31304D] mb-4">Enter Password</h2>
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
+        {/* Close Button */}
+        <button 
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-xl"
+          onClick={handleClose}
+        >
+          &times;
+        </button>
+        
+        <h2 className="text-xl font-semibold text-[#31304D] mb-4 text-center">Enter Password</h2>
         <input
           type="password"
           value={password}
