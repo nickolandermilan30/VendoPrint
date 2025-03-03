@@ -13,11 +13,16 @@ app.use(express.json({ limit: "Infinity" }));
 app.use(express.urlencoded({ limit: "Infinity", extended: true }));
 
 app.use(cors({
-  origin: "http://localhost:5173",  
+  origin: "https://vendo-print.vercel.app",  
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type"],
 }));
 
+// app.use(cors({
+//   origin: "http://localhost:5173",  
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+//   allowedHeaders: ["Content-Type"],
+// }));
 
 
 // Use default route
