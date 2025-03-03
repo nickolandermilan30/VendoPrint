@@ -231,7 +231,7 @@ const Printer = () => {
           <div className="bg-white p-10 rounded-lg shadow-lg max-w-lg w-full flex flex-col items-center relative">
             <button 
               className="absolute top-4 right-4 bg-transparent text-black-700 px-3 py-1 rounded-full"
-              onClick={() => navigate('/qr-upload')}>
+              onClick={() => navigate('/usb')}>
             
             <FaTimes className="text-2xl" />
             </button>
