@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "../../../firebase/firebase_config";
+import { storage,realtimeDb } from "../../../firebase/firebase_config";
+import { ref as dbRef, set, push } from "firebase/database";
 import { PDFDocument } from "pdf-lib";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -38,19 +39,20 @@ const FileUpload = () => {
       console.error("Error processing PDF:", error);
     }
   };
-
+ 
   const uploadFile = async () => {
     if (!fileToUpload) {
       alert("No file selected for upload!");
       return;
     }
-
+  
     try {
       setUploadStatus("uploading");
-      // I-upload ang file sa Firebase Storage
+  
+      // Upload file to Firebase Storage
       const storageRef = ref(storage, `uploads/${fileToUpload.name}`);
       const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-
+  
       uploadTask.on(
         "state_changed",
         null,
@@ -62,7 +64,17 @@ const FileUpload = () => {
           try {
             const url = await getDownloadURL(uploadTask.snapshot.ref);
             setUploadStatus("");
-            // Kapag tapos na, navigate sa printer page kasama ang file details
+  
+            // Push file details to Firebase Realtime Database
+            const fileRef = push(dbRef(realtimeDb, "uploadedFiles"));
+            await set(fileRef, {
+              fileName: fileToUpload.name,
+              fileUrl: url,
+              totalPages,
+              uploadedAt: new Date().toISOString(),
+            });
+  
+            // Navigate to printer page with file details
             navigate("/printer", { 
               state: { 
                 fileName: fileToUpload.name, 
@@ -71,7 +83,7 @@ const FileUpload = () => {
               }
             });
           } catch (error) {
-            console.error("Error getting download URL:", error);
+            console.error("Error storing file info in database:", error);
             setUploadStatus("");
           }
         }

@@ -36,7 +36,7 @@ const Printer = () => {
   useEffect(() => {
     console.log("From FileUpload:", uploadedFileName, uploadedFileUrl, uploadedFileTotalPages);
     
-    const queueRef = ref(realtimeDb, "files");
+    const queueRef = ref(realtimeDb, "uploadedFiles");
 
     const unsubscribe = onValue(queueRef, (snapshot) => {
       const data = snapshot.val();
@@ -61,26 +61,23 @@ const Printer = () => {
   }, []);
 
   useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const storageFolderRef = storageRef(storage, "uploads/"); 
-        const result = await listAll(storageFolderRef);
-  
-        const files = await Promise.all(
-          result.items
-            .filter((fileRef) => !fileRef.name.endsWith(".svg")) 
-            .map(async (fileRef) => {
-              const url = await getDownloadURL(fileRef);
-              return { name: fileRef.name, url };
-            })
-        );
-  
-        setUploadedFiles(files); 
-      } catch (error) {
-       
-      }
+    const fetchFiles = () => {
+      const queueRef = ref(realtimeDb, "uploadedFiles"); // Reference to 'uploadedFiles' in Realtime DB
+
+      onValue(queueRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const filesArray = Object.keys(data).map((key) => ({
+            id: key, // Unique Firebase key
+            ...data[key], // Spread file data (name, URL, totalPages)
+          }));
+          setUploadedFiles(filesArray);
+        } else {
+          setUploadedFiles([]); 
+        }
+      });
     };
-  
+
     fetchFiles();
   }, []);
   
@@ -228,41 +225,41 @@ const Printer = () => {
             </ul>
           )}
         </div>
-        <h2 className="text-xl font-bold">Uploaded File</h2>
-        <div className="flex-1 flex items-center justify-center w-full">
-        <div >
-            {uploadedFiles.length === 0 ? (
-              <p>No uploaded files</p>
-            ) : (
-              <ul className="w-full">
-                {uploadedFiles.map((file) => (
-                  <li key={file.name} className="p-2 border-b border-gray-300 flex items-center gap-2">
-                    {getFileIcon(file.name)}
+        <h2 className="text-xl font-bold">Uploaded Files</h2>
+      <div className="flex-1 flex items-center justify-center w-full">
+        <div>
+          {uploadedFiles.length === 0 ? (
+            <p>No uploaded files</p>
+          ) : (
+            <ul className="w-full">
+              {uploadedFiles.map((file) => (
+                <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
+                  {/* File Icon Placeholder (Replace with getFileIcon if you have it) */}
+                  <span>📄</span>  
 
-                    <div>
-                    <Link 
-                    to={`/qr?name=${encodeURIComponent(uploadedFileName || file.name)}&url=${encodeURIComponent(uploadedFileUrl || file.url)}&pages=${encodeURIComponent(uploadedFileTotalPages)}`}
-                    className="text-dark text-sm"
-                  >
-                    <p><strong>Name:</strong> {uploadedFileName || file.name}</p>
-                  </Link>
-
-
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        
+                  <div>
+                    <Link
+                      to={`/qr?name=${encodeURIComponent(file.fileName)}&url=${encodeURIComponent(file.fileUrl)}&pages=${encodeURIComponent(file.totalPages)}`}
+                      className="text-dark text-sm"
+                    >
+                      <p><strong>Name:</strong> {file.fileName}</p>
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <button 
-          onClick={clearAllFiles} 
-          className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
-        >
-          Clear Files
-        </button>
       </div>
+
+      {/* Clear All Files Button */}
+      <button 
+        onClick={clearAllFiles} 
+        className="mb-4 px-4 py-2 bg-gray-500 text-white rounded-2xl hover:bg-gray-700"
+      >
+        Clear Files
+      </button>
+    </div>
 
       
       

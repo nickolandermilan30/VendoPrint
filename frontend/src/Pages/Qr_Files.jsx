@@ -42,12 +42,10 @@ const QRUpload = () => {
   const [selectedPageOption, setSelectedPageOption] = useState("All");
   const [customPageRange, setCustomPageRange] = useState("");
 
-  localStorage.setItem("totalPages", totalPages);
 
-  const storedPages = localStorage.getItem("totalPages");
 
   const [totalPages, setTotalPages] = useState(() => {
-    return pagesParam ? parseInt(pagesParam, 10) : 1;
+    return pagesParam ? parseInt(pagesParam) : 1;
   });
   
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
@@ -300,7 +298,6 @@ const QRUpload = () => {
                 isColor={isColor}
                 copies={copies}
                 totalPages={totalPages}
-                setTotalPages={setTotalPages}
                 isSmartPriceEnabled={isSmartPriceEnabled}
                 setIsSmartPriceEnabled={setIsSmartPriceEnabled}
                 calculatedPrice={calculatedPrice}
@@ -309,6 +306,7 @@ const QRUpload = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
+                filePreviewUrl={fileUrl}
               />
             </div>
           </div>
