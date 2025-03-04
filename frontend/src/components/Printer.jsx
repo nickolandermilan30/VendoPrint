@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from "react-router-dom";  
 import { realtimeDb,storage} from '../../firebase/firebase_config';
-import { ref, onValue,  update } from "firebase/database"
+import { ref, onValue,  update, remove } from "firebase/database"
 import { deleteObject, listAll, getDownloadURL, ref as storageRef } from "firebase/storage";
 
 import { 
@@ -81,28 +81,25 @@ const Printer = () => {
     fetchFiles();
   }, []);
   
-  //Function to delete 
   const clearAllFiles = async () => {
     if (!window.confirm("Are you sure you want to clear all files? This action cannot be undone.")) {
       return;
     }
   
     try {
-      // Reference to the "uploads" folder in Firebase Storage
+
       const storageFolderRef = storageRef(storage, "uploads/");
       const result = await listAll(storageFolderRef);
   
-      // Delete each file in Firebase Storage
       await Promise.all(
-        result.items.map(async (fileRef) => {
-          await deleteObject(fileRef);
-        })
+        result.items.map((fileRef) => deleteObject(fileRef))
       );
   
-      // Clear files from Realtime Database
-      await update(ref(realtimeDb, "files"), {});
+    
+      await remove(ref(realtimeDb, "files"));
+      await remove(ref(realtimeDb, "uploadedFiles"));
   
-      // Update state
+      
       setQueue([]);
       setUploadedFiles([]);
   
