@@ -141,13 +141,7 @@ const Xerox = () => {
             </div>
           </div>
 
-          {/* Right Side - File Preview */}
-          <div className="w-full">
-            <DocumentPreview
-              fileUrl={filePreviewUrl}
-              fileName={fileToUpload?.name}
-            />
-          </div>
+          
         </div>
 
      {/* Bottom Section (Print Button) */}
