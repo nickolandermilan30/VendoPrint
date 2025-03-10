@@ -18,14 +18,8 @@ function SmartPriceLabel({
 
  
 
-
-if (!filePreviewUrl){
-  const totalCost = 0;
-    setCalculatedPrice(totalCost);
-}else{
   const totalCost = pricePerPage * copies * pagesToPrint;
-  setCalculatedPrice(totalCost);}
-
+  setCalculatedPrice(totalCost);
   
   }, [ copies, totalPages, setCalculatedPrice,filePreviewUrl]);
 

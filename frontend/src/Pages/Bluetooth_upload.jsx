@@ -46,7 +46,7 @@ const BTUpload = () => {
 
   useEffect(() => {
     const fetchAvailableCoins = async () => {
-      const coinRef = dbRef(realtimeDb, "coinCount");
+      const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
       try {
         const snapshot = await get(coinRef);
         if (snapshot.exists()) {
@@ -425,6 +425,7 @@ const BTUpload = () => {
                 setSelectedPageOption={setSelectedPageOption}
                 customPageRange={customPageRange}
                 setCustomPageRange={setCustomPageRange}
+                filePreviewUrl = {filePreviewUrl}
               />
             </div>
           </div>

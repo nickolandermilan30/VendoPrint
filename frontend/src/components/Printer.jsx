@@ -80,6 +80,10 @@ const Printer = () => {
 
     fetchFiles();
   }, []);
+
+  const cancelPrintJob = (fileId) => {
+    setQueue((prevQueue) => prevQueue.filter(file => file.id !== fileId));
+  };
   
   const clearAllFiles = async () => {
     if (!window.confirm("Are you sure you want to clear all files? This action cannot be undone.")) {
@@ -199,26 +203,32 @@ const Printer = () => {
           ) : (
             <ul className="w-full">
               {queue.map((file) => (
-                <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
-                  {/* File Type Icon */}
-                  {getFileIcon(file.name || file.fileName)}
+                <li key={file.id} className="p-2 border-b border-gray-300 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {/* File Type Icon */}
+                    {getFileIcon(file.name || file.fileName)}
 
-                  <div>
-                    <p><strong>Name:</strong> {file.fileName}</p>
-                    <p><strong>Status:</strong> {file.status}</p>
+                    <div>
+                      <p><strong>Name:</strong> {file.fileName}</p>
+                      <p><strong>Status:</strong> {file.status}</p>
 
-                    {file.status === "Pending" && (
-                      <button
-                        onClick={() => startPrinting(file.id)}
-                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-                      >
-                        Start Print
-                      </button>
-                    )}
+                      {file.status === "Pending" && (
+                        <button
+                          onClick={() => startPrinting(file.id)}
+                          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+                        >
+                          Start Print
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Cancel Button */}
+                  <button onClick={() => cancelPrintJob(file.id)} className="text-red-500 hover:text-red-700">
+                    <FaTimes size={18} />
+                  </button>
                 </li>
               ))}
-
             </ul>
           )}
         </div>
