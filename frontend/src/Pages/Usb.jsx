@@ -13,7 +13,7 @@ import PageSize from "../components/usb/page_size";
 import Copies from "../components/usb/copies";
 
 import { realtimeDb, storage } from "../../firebase/firebase_config";
-import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
+import { getDatabase, ref as dbRef, push, get, update } from "firebase/database";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import axios from "axios";
 import { PDFDocument } from "pdf-lib";
@@ -50,7 +50,7 @@ const Usb = () => {
 
   useEffect(() => {
     const fetchAvailableCoins = async () => {
-      const coinRef = dbRef(realtimeDb, "coinCount");
+      const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
       try {
         const snapshot = await get(coinRef);
         if (snapshot.exists()) {
@@ -165,7 +165,7 @@ const Usb = () => {
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        setAvailableCoins = snapshot.val();
+        setAvailableCoins(snapshot.val());
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);
@@ -293,7 +293,7 @@ const Usb = () => {
       });
 
       const updatedCoins = availableCoins - calculatedPrice;
-      await update(coinRef, { availableCoins: updatedCoins });
+      await update(dbRef(realtimeDb, "coinCount"), { availableCoins: updatedCoins });
       alert("Print job sent successfully. Coins deducted.");
 
       try {
