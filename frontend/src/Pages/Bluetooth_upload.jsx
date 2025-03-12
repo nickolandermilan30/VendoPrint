@@ -288,7 +288,7 @@ const BTUpload = () => {
         totalPages: totalPages,
         finalPrice: calculatedPrice,
         timestamp: new Date().toISOString(),
-        status: "queued",
+        status: "Pending",
       });
 
      

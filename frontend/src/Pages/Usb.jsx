@@ -43,7 +43,6 @@ const Usb = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
   const [calculatedPrice, setCalculatedPrice] = useState(0);
-  const [status , setStatus] = useState("pending");
   const [isLoading, setIsLoading] = useState(false);
   let [availableCoins, setAvailableCoins] = useState(0);
 
@@ -289,7 +288,7 @@ const Usb = () => {
         totalPages: totalPages,
         finalPrice:  calculatedPrice,
         timestamp: new Date().toISOString(),
-        status: status
+        status: "Pending"
       });
 
       const updatedCoins = availableCoins - calculatedPrice;
