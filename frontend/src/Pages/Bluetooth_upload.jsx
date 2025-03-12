@@ -48,6 +48,7 @@ const BTUpload = () => {
     const fetchAvailableCoins = async () => {
       const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
       try {
+
         const snapshot = await get(coinRef);
         if (snapshot.exists()) {
           setAvailableCoins(snapshot.val());
@@ -84,7 +85,7 @@ const BTUpload = () => {
 
     // If PDF, get total pages
     if (file.type === "application/pdf") {
-      const reader = new FileReader();
+      const reader = new FileReader();  
       reader.onload = async (e) => {
         const pdfData = new Uint8Array(e.target.result);
         const pdfDoc = await PDFDocument.load(pdfData);
