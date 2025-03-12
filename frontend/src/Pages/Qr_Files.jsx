@@ -205,7 +205,7 @@ const QRUpload = () => {
         totalPages: totalPages,
         finalPrice:calculatedPrice,
         timestamp: new Date().toISOString(),
-        status: status
+        status: "Pending"
       });
 
       const updatedCoins = availableCoins - calculatedPrice;
