@@ -1,155 +1,49 @@
-import pdfToPrinter from "pdf-to-printer";
-import path from "path";
-import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
-import { exec } from "child_process";
-
-
-const { getPrinters, print } = pdfToPrinter; 
-
-export const fetchPrinters = async (req, res) => {
-  try {
-    const printers = await getPrinters();
-    res.json({ success: true, printers });
-  } catch (error) {
-    console.error("Error fetching printers:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch printers", error: error.message });
-  }
-};
-
-
-const checkPrinterStatus = (printerName) => {
-  return new Promise((resolve, reject) => {
-    exec(`wmic printer where name="${printerName}" get PrinterStatus`, (error, stdout, stderr) => {
-      if (error) {
-        return reject(new Error("Failed to retrieve printer status"));
-      }
-      const status = stdout.trim().split("\n")[1]?.trim();
-      resolve(status === "3"); 
-    });
-  });
-};
-
-
-export const printFile = async (req, res) => {
-  const { printerName, fileUrl } = req.body;
-  const fileName = `${uuidv4()}.pdf`;
-  const documentsDir = path.join(process.cwd(), "documents");
-  const filePath = path.join(documentsDir, fileName);
-
-  try {
-    
-    if (!fs.existsSync(documentsDir)) {
-      fs.mkdirSync(documentsDir, { recursive: true });
-    }
-
-
-    const response = await axios.get(fileUrl, { responseType: "stream" });
-    const writer = fs.createWriteStream(filePath);
-    response.data.pipe(writer);
-
-    writer.on("finish", async () => {
-      try {
-     
-        const printers = await getPrinters();
-        const printerNames = printers.map((printer) => printer.name);
-
-        if (!printerNames.includes(printerName)) {
-          throw new Error("Printer not found");
-        }
-
-
-        const isOnline = await checkPrinterStatus(printerName);
-        if (!isOnline) {
-          throw new Error("Printer is offline");
-        }
-
-        await print(filePath, { printer: printerName });
-
-        fs.unlinkSync(filePath);
-
-        res.json({ success: true, message: "Print job sent successfully" });
-      } catch (error) {
-        console.error("Error during print job:", error);
-        res.status(500).json({ success: false, message: error.message });
-      }
-    });
-
-    writer.on("error", (err) => {
-      console.error("Error writing file:", err);
-      res.status(500).json({ success: false, message: err.message });
-    });
-  } catch (error) {
-    console.error("Error during file download:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-
-// import { exec } from "child_process";
+// import pdfToPrinter from "pdf-to-printer";
 // import path from "path";
 // import fs from "fs";
 // import { v4 as uuidv4 } from "uuid";
-// import axios from "axios";
-// import ipp from "ipp"; 
+// import { exec } from "child_process";
+// import axios from 'axios';
 
-// const SUPPORTED_FORMATS = ["pdf", "docx", "jpg", "jpeg", "png"];
+// const { getPrinters, print } = pdfToPrinter; 
 
-// // Fetch available printers dynamically
 // export const fetchPrinters = async (req, res) => {
-//   console.log("Fetching available printers...");
-
 //   try {
-//     exec("wmic printer get name", (error, stdout, stderr) => {
-//       if (error || stderr) {
-//         console.error("Error fetching printers:", error || stderr);
-//         return res.status(500).json({ success: false, message: "Failed to fetch printers" });
-//       }
-
-//       const printers = stdout.split("\n").slice(1).filter(Boolean).map((line) => line.trim());
-//       console.log("Printers found:", printers);
-//       res.json({ success: true, printers });
-//     });
+//     const printers = await getPrinters();
+//     console.log("Printers returned:", printers);
+//     res.json({ success: true, printers });
 //   } catch (error) {
 //     console.error("Error fetching printers:", error);
-//     res.status(500).json({ success: false, message: error.message });
+//     res.status(500).json({ success: false, message: "Failed to fetch printers", error: error.message });
 //   }
 // };
 
-// // Convert DOCX to PDF (LibreOffice needed)
-// const convertDocxToPdf = async (inputPath, outputPath) => {
-//   return new Promise((resolve, reject) => {
-//     const command = process.platform === "win32"
-//       ? `"C:\\Program Files\\LibreOffice\\program\\soffice.exe" --headless --convert-to pdf "${inputPath}" --outdir "${path.dirname(outputPath)}"`
-//       : `libreoffice --headless --convert-to pdf "${inputPath}" --outdir "${path.dirname(outputPath)}"`;
 
-//     exec(command, (error, stdout, stderr) => {
+// const checkPrinterStatus = (printerName) => {
+//   return new Promise((resolve, reject) => {
+//     exec(`wmic printer where name="${printerName}" get PrinterStatus`, (error, stdout, stderr) => {
 //       if (error) {
-//         console.error("Error converting DOCX to PDF:", stderr);
-//         return reject(new Error("Failed to convert DOCX to PDF"));
+//         return reject(new Error("Failed to retrieve printer status"));
 //       }
-//       resolve(outputPath);
+//       const status = stdout.trim().split("\n")[1]?.trim();
+//       resolve(status === "3"); 
 //     });
 //   });
 // };
 
-// // Print a file using IPP for network compatibility
+
 // export const printFile = async (req, res) => {
-//   const { printerUrl, fileUrl } = req.body;
-//   const ext = path.extname(fileUrl).toLowerCase().replace(".", "");
-
-//   if (!SUPPORTED_FORMATS.includes(ext)) {
-//     return res.status(400).json({ success: false, message: `Unsupported file type: ${ext}` });
-//   }
-
-//   const fileName = `${uuidv4()}.${ext}`;
+//   const { printerName, fileUrl } = req.body;
+//   const fileName = `${uuidv4()}.pdf`;
 //   const documentsDir = path.join(process.cwd(), "documents");
 //   const filePath = path.join(documentsDir, fileName);
 
 //   try {
+    
 //     if (!fs.existsSync(documentsDir)) {
 //       fs.mkdirSync(documentsDir, { recursive: true });
 //     }
+
 
 //     const response = await axios.get(fileUrl, { responseType: "stream" });
 //     const writer = fs.createWriteStream(filePath);
@@ -157,36 +51,25 @@ export const printFile = async (req, res) => {
 
 //     writer.on("finish", async () => {
 //       try {
-//         let printFilePath = filePath;
+     
+//         const printers = await getPrinters();
+//         const printerNames = printers.map((printer) => printer.name);
 
-//         if (ext === "docx") {
-//           const pdfPath = filePath.replace(".docx", ".pdf");
-//           await convertDocxToPdf(filePath, pdfPath);
-//           printFilePath = pdfPath;
+//         if (!printerNames.includes(printerName)) {
+//           throw new Error("Printer not found");
 //         }
 
-//         const printer = ipp.Printer(printerUrl);
-//         const data = fs.readFileSync(printFilePath);
 
-//         const msg = {
-//           "operation-attributes-tag": {
-//             "requesting-user-name": "User",
-//             "job-name": fileName,
-//             "document-format": "application/pdf",
-//           },
-//           data,
-//         };
+//         const isOnline = await checkPrinterStatus(printerName);
+//         if (!isOnline) {
+//           throw new Error("Printer is offline");
+//         }
 
-//         printer.execute("Print-Job", msg, (err, response) => {
-//           if (err) {
-//             console.error("Error printing file:", err);
-//             return res.status(500).json({ success: false, message: "Failed to print file", error: err.message });
-//           }
+//         await print(filePath, { printer: printerName });
 
-//           console.log("Print job sent successfully", response);
-//           fs.unlinkSync(printFilePath);
-//           res.json({ success: true, message: "Print job sent successfully" });
-//         });
+//         fs.unlinkSync(filePath);
+
+//         res.json({ success: true, message: "Print job sent successfully" });
 //       } catch (error) {
 //         console.error("Error during print job:", error);
 //         res.status(500).json({ success: false, message: error.message });
@@ -195,10 +78,111 @@ export const printFile = async (req, res) => {
 
 //     writer.on("error", (err) => {
 //       console.error("Error writing file:", err);
-//       res.status(500).json({ success: false, message: "File write error", error: err.message });
+//       res.status(500).json({ success: false, message: err.message });
 //     });
 //   } catch (error) {
 //     console.error("Error during file download:", error);
-//     res.status(500).json({ success: false, message: "File download error", error: error.message });
+//     res.status(500).json({ success: false, message: error.message });
 //   }
 // };
+
+
+import pdfToPrinter from "pdf-to-printer";
+import path from "path";
+import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
+import { exec } from "child_process";
+import axios from "axios";
+
+const { getPrinters, print } = pdfToPrinter; 
+
+// Function para kunin ang listahan ng mga printers
+export const fetchPrinters = async (req, res) => {
+  try {
+    const printers = await getPrinters();
+    console.log("Printers returned:", printers);
+    res.json({ success: true, printers });
+  } catch (error) {
+    console.error("Error fetching printers:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch printers", error: error.message });
+  }
+};
+
+// Function para i-check ang printer status gamit ang WMIC
+const checkPrinterStatus = (printerName) => {
+  return new Promise((resolve, reject) => {
+    exec(`wmic printer where name="${printerName}" get PrinterStatus`, (error, stdout, stderr) => {
+      if (error) {
+        return reject(new Error("Failed to retrieve printer status"));
+      }
+      // I-filter ang output para tanggalin ang mga blangkong linya
+      const lines = stdout.trim().split("\n").filter(line => line.trim() !== "");
+      if (lines.length < 2) {
+        return resolve(false);
+      }
+      // Ang ikalawang linya ay inaasahan na may status
+      const status = lines[1].trim();
+      resolve(status === "3");
+    });
+  });
+};
+
+// Promise wrapper para i-download ang file gamit ang axios stream
+const downloadFile = (url, filePath) => {
+  return new Promise((resolve, reject) => {
+    axios.get(url, { responseType: "stream" })
+      .then(response => {
+        const writer = fs.createWriteStream(filePath);
+        response.data.pipe(writer);
+        writer.on("finish", () => resolve());
+        writer.on("error", (err) => reject(err));
+      })
+      .catch(err => reject(err));
+  });
+};
+
+// Function para i-download ang file, i-check ang printer, at i-print ang file
+export const printFile = async (req, res) => {
+  const { printerName, fileUrl } = req.body;
+  const fileName = `${uuidv4()}.pdf`;
+  const documentsDir = path.join(process.cwd(), "documents");
+  const filePath = path.join(documentsDir, fileName);
+
+  try {
+    // Siguraduhing mayroong documents directory
+    if (!fs.existsSync(documentsDir)) {
+      fs.mkdirSync(documentsDir, { recursive: true });
+    }
+
+    // Kunin muna ang mga printer at i-verify kung available ang target printer
+    const printers = await getPrinters();
+    const printerNames = printers.map(printer => printer.name);
+    if (!printerNames.includes(printerName)) {
+      return res.status(404).json({ success: false, message: "Printer not found" });
+    }
+
+    // I-check ang status ng printer bago mag-download ng file
+    const isOnline = await checkPrinterStatus(printerName);
+    if (!isOnline) {
+      return res.status(400).json({ success: false, message: "Printer is offline" });
+    }
+
+    // I-download ang file
+    await downloadFile(fileUrl, filePath);
+
+    // I-print ang file
+    await print(filePath, { printer: printerName });
+
+    // Tanggalin ang file pagkatapos mag-print
+    fs.unlinkSync(filePath);
+
+    res.json({ success: true, message: "Print job sent successfully" });
+  } catch (error) {
+    console.error("Error during printFile operation:", error);
+    // Siguraduhing tatanggalin ang file kung merong error at naka-save na ito
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
