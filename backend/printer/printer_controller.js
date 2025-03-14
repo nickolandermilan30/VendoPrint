@@ -1,188 +1,123 @@
-// import pdfToPrinter from "pdf-to-printer";
-// import path from "path";
-// import fs from "fs";
-// import { v4 as uuidv4 } from "uuid";
-// import { exec } from "child_process";
-// import axios from 'axios';
+import pkg from 'pdf-to-printer';
+const { getPrinters: pdfGetPrinters, print: pdfPrint } = pkg;
+import path from 'path';
+import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import { exec } from 'child_process';
+import axios from 'axios';
+import { fileURLToPath } from 'url';
 
-// const { getPrinters, print } = pdfToPrinter; 
+// Workaround para makuha ang __dirname sa ESM:
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// export const fetchPrinters = async (req, res) => {
-//   try {
-//     const printers = await getPrinters();
-//     console.log("Printers returned:", printers);
-//     res.json({ success: true, printers });
-//   } catch (error) {
-//     console.error("Error fetching printers:", error);
-//     res.status(500).json({ success: false, message: "Failed to fetch printers", error: error.message });
-//   }
-// };
-
-
-// const checkPrinterStatus = (printerName) => {
-//   return new Promise((resolve, reject) => {
-//     exec(`wmic printer where name="${printerName}" get PrinterStatus`, (error, stdout, stderr) => {
-//       if (error) {
-//         return reject(new Error("Failed to retrieve printer status"));
-//       }
-//       const status = stdout.trim().split("\n")[1]?.trim();
-//       resolve(status === "3"); 
-//     });
-//   });
-// };
-
-
-// export const printFile = async (req, res) => {
-//   const { printerName, fileUrl } = req.body;
-//   const fileName = `${uuidv4()}.pdf`;
-//   const documentsDir = path.join(process.cwd(), "documents");
-//   const filePath = path.join(documentsDir, fileName);
-
-//   try {
-    
-//     if (!fs.existsSync(documentsDir)) {
-//       fs.mkdirSync(documentsDir, { recursive: true });
-//     }
-
-
-//     const response = await axios.get(fileUrl, { responseType: "stream" });
-//     const writer = fs.createWriteStream(filePath);
-//     response.data.pipe(writer);
-
-//     writer.on("finish", async () => {
-//       try {
-     
-//         const printers = await getPrinters();
-//         const printerNames = printers.map((printer) => printer.name);
-
-//         if (!printerNames.includes(printerName)) {
-//           throw new Error("Printer not found");
-//         }
-
-
-//         const isOnline = await checkPrinterStatus(printerName);
-//         if (!isOnline) {
-//           throw new Error("Printer is offline");
-//         }
-
-//         await print(filePath, { printer: printerName });
-
-//         fs.unlinkSync(filePath);
-
-//         res.json({ success: true, message: "Print job sent successfully" });
-//       } catch (error) {
-//         console.error("Error during print job:", error);
-//         res.status(500).json({ success: false, message: error.message });
-//       }
-//     });
-
-//     writer.on("error", (err) => {
-//       console.error("Error writing file:", err);
-//       res.status(500).json({ success: false, message: err.message });
-//     });
-//   } catch (error) {
-//     console.error("Error during file download:", error);
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
-
-import pdfToPrinter from "pdf-to-printer";
-import path from "path";
-import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
-import { exec } from "child_process";
-import axios from "axios";
-
-const { getPrinters, print } = pdfToPrinter; 
-
-// Function para kunin ang listahan ng mga printers
-export const fetchPrinters = async (req, res) => {
+/**
+ * Kunin ang listahan ng printers gamit ang pdf-to-printer.
+ * (Ipinangalan ko itong getPrintersHandler para iwas name collision.)
+ */
+export const getPrintersHandler = async (req, res) => {
   try {
-    const printers = await getPrinters();
-    console.log("Printers returned:", printers);
-    res.json({ success: true, printers });
+    const printers = await pdfGetPrinters();
+    res.json({ status: 'success', printers });
   } catch (error) {
-    console.error("Error fetching printers:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch printers", error: error.message });
+    console.error('Error fetching printers:', error);
+    res.status(500).json({ status: 'error', error: error.message });
   }
 };
 
-// Function para i-check ang printer status gamit ang WMIC
+/**
+ * I-check kung online ang printer gamit ang wmic (posibleng magka-issue sa mas bagong Windows).
+ */
 const checkPrinterStatus = (printerName) => {
   return new Promise((resolve, reject) => {
-    exec(`wmic printer where name="${printerName}" get PrinterStatus`, (error, stdout, stderr) => {
-      if (error) {
-        return reject(new Error("Failed to retrieve printer status"));
+    exec(
+      `wmic printer where name="${printerName}" get PrinterStatus`,
+      (error, stdout, stderr) => {
+        if (error) {
+          return reject(new Error('Failed to retrieve printer status'));
+        }
+        // Hatiin ang output at i-check kung "3" ang status
+        const lines = stdout.trim().split('\n').filter(line => line.trim() !== '');
+        if (lines.length < 2) {
+          // Kapag walang sapat na linya, assume offline
+          return resolve(false);
+        }
+        const status = lines[1].trim();
+        resolve(status === '3'); // "3" = online
       }
-      // I-filter ang output para tanggalin ang mga blangkong linya
-      const lines = stdout.trim().split("\n").filter(line => line.trim() !== "");
-      if (lines.length < 2) {
-        return resolve(false);
-      }
-      // Ang ikalawang linya ay inaasahan na may status
-      const status = lines[1].trim();
-      resolve(status === "3");
-    });
+    );
   });
 };
 
-// Promise wrapper para i-download ang file gamit ang axios stream
-const downloadFile = (url, filePath) => {
-  return new Promise((resolve, reject) => {
-    axios.get(url, { responseType: "stream" })
-      .then(response => {
-        const writer = fs.createWriteStream(filePath);
-        response.data.pipe(writer);
-        writer.on("finish", () => resolve());
-        writer.on("error", (err) => reject(err));
-      })
-      .catch(err => reject(err));
-  });
-};
-
-// Function para i-download ang file, i-check ang printer, at i-print ang file
-export const printFile = async (req, res) => {
-  const { printerName, fileUrl } = req.body;
-  const fileName = `${uuidv4()}.pdf`;
-  const documentsDir = path.join(process.cwd(), "documents");
-  const filePath = path.join(documentsDir, fileName);
-
+/**
+ * I-download ang PDF mula sa fileUrl, i-check ang printer, at i-print.
+ * (Ipinangalan ko itong printFileHandler para iwas name collision.)
+ */
+export const printFileHandler = async (req, res) => {
   try {
-    // Siguraduhing mayroong documents directory
+    const { printerName, fileUrl } = req.body;
+    if (!printerName || !fileUrl) {
+      return res.status(400).json({
+        status: 'error',
+        error: 'Missing printerName or fileUrl in request body.'
+      });
+    }
+
+    // Path kung saan itatabi ang PDF temporarily
+    const documentsDir = path.join(__dirname, 'documents');
     if (!fs.existsSync(documentsDir)) {
       fs.mkdirSync(documentsDir, { recursive: true });
     }
+    const fileName = `${uuidv4()}.pdf`;
+    const filePath = path.join(documentsDir, fileName);
 
-    // Kunin muna ang mga printer at i-verify kung available ang target printer
-    const printers = await getPrinters();
-    const printerNames = printers.map(printer => printer.name);
-    if (!printerNames.includes(printerName)) {
-      return res.status(404).json({ success: false, message: "Printer not found" });
-    }
+    // 1. I-download ang file
+    const response = await axios.get(fileUrl, { responseType: 'stream' });
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
 
-    // I-check ang status ng printer bago mag-download ng file
-    const isOnline = await checkPrinterStatus(printerName);
-    if (!isOnline) {
-      return res.status(400).json({ success: false, message: "Printer is offline" });
-    }
+    // Kapag tapos na ang pag-sulat, saka tayo magpi-print
+    writer.on('finish', async () => {
+      try {
+        // 2. Kunin ang list of printers
+        const printers = await pdfGetPrinters();
+        const printerNames = printers.map(p => p.name);
 
-    // I-download ang file
-    await downloadFile(fileUrl, filePath);
+        if (!printerNames.includes(printerName)) {
+          throw new Error('Printer not found');
+        }
 
-    // I-print ang file
-    await print(filePath, { printer: printerName });
+        // 3. I-check kung online ang printer
+        const isOnline = await checkPrinterStatus(printerName);
+        if (!isOnline) {
+          throw new Error('Printer is offline');
+        }
 
-    // Tanggalin ang file pagkatapos mag-print
-    fs.unlinkSync(filePath);
+        // 4. I-print ang PDF
+        await pdfPrint(filePath, { printer: printerName });
 
-    res.json({ success: true, message: "Print job sent successfully" });
+        // 5. Burahin ang PDF pagkatapos
+        fs.unlinkSync(filePath);
+
+        return res.json({ status: 'success', message: 'Print job sent successfully.' });
+      } catch (error) {
+        console.error('Error during print job:', error);
+        // Kung may error, subukang i-delete ang file kung nandoon pa
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+        return res.status(500).json({ status: 'error', error: error.message });
+      }
+    });
+
+    // Error handling kung may problema sa pag-sulat ng file
+    writer.on('error', (err) => {
+      console.error('Error writing file:', err);
+      return res.status(500).json({ status: 'error', error: err.message });
+    });
+
   } catch (error) {
-    console.error("Error during printFile operation:", error);
-    // Siguraduhing tatanggalin ang file kung merong error at naka-save na ito
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Error during file download or setup:', error);
+    return res.status(500).json({ status: 'error', error: error.message });
   }
 };

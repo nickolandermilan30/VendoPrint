@@ -1,22 +1,17 @@
-import express from "express";
-import { addData, getData } from "../controller/firebase_controller.js";
-// import UsbList from "../controller/usd_drives_controller.js";
-// import upload from "../cloudinarry/multer_cloudinarry.js";
-
-import { fetchPrinters, printFile } from "../printer/printer_controller.js";
-
+// BackendRoutes.js
+import express from 'express';
+import { addData, getData } from '../controller/firebase_controller.js';
+// I-import natin ang mga handler na bagong pangalan
+import { getPrintersHandler, printFileHandler } from '../printer/printer_controller.js';
 
 const BackendRoutes = express.Router();
-// Firebase Route
-BackendRoutes.post("/add-data", addData);
-BackendRoutes.get("/get-files", getData);
 
-// BackendRoutes.post("/upload", upload.single("file"), uploadFile); 
+// Firebase Routes
+BackendRoutes.post('/add-data', addData);
+BackendRoutes.get('/get-files', getData);
 
-//Printer
-BackendRoutes.get("/printers", fetchPrinters);
-BackendRoutes.post("/print", printFile);
+// Printer Routes
+BackendRoutes.get('/printers', getPrintersHandler);
+BackendRoutes.post('/print', printFileHandler);
 
-//USB Drive
-// BackendRoutes.get("/usb-files", UsbList);
 export default BackendRoutes;
