@@ -8,82 +8,66 @@ import PrinterList from "../components/xerox/printerList";
 import Copies from "../components/xerox/copies";
 import SmartPriceToggle from "../components/xerox/smart_price";
 
-import { realtimeDb, storage} from '../../firebase/firebase_config';
-import { getDatabase, ref as dbRef, push,get, update } from "firebase/database";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { realtimeDb } from '../../firebase/firebase_config';
+import { getDatabase, ref as dbRef, get } from "firebase/database";
 import axios from "axios";
-import { PDFDocument } from "pdf-lib";
-import mammoth from "mammoth";
-
-import { getPageIndicesToPrint } from "../utils/pageRanges"; // <-- Import your utility
-
 
 const Xerox = () => {
   const navigate = useNavigate();
 
-  // File states
+  // File at Printer states
   const [filePreviewUrl, setFilePreviewUrl] = useState("");
-  const [fileToUpload, setFileToUpload] = useState(null);
+  const [selectedPrinter, setSelectedPrinter] = useState("");
+  const [copies, setCopies] = useState(1);
+  const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [availableCoins, setAvailableCoins] = useState(0);
 
-   // Print settings states
-    const [selectedPrinter, setSelectedPrinter] = useState("");
-    const [copies, setCopies] = useState(1);
-    const [isSmartPriceEnabled, setIsSmartPriceEnabled] = useState(false);
-    const [calculatedPrice, setCalculatedPrice] = useState(0);
-  
-   
-    const [totalPages, setTotalPages] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
-   let [availableCoins, setAvailableCoins] = useState(0);
-    
-      useEffect(() => {
-         const fetchAvailableCoins = async () => {
-           const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
-           try {
-             const snapshot = await get(coinRef);
-             if (snapshot.exists()) {
-               setAvailableCoins(snapshot.val());
-             } else {
-               console.error("Error retrieving available coins.");
-             }
-           } catch (error) {
-             console.error("Error fetching available coins:", error);
-           }
-         };
-       
-         fetchAvailableCoins();
-       }, []);
-     
-
-   
-  
-       const handlePrint = async () => {
-        setIsLoading(true);
-        
-        if (!selectedPrinter) {
-            alert("No printer selected! Please choose a printer first.");
-            setIsLoading(false);
-            return;
+  useEffect(() => {
+    const fetchAvailableCoins = async () => {
+      const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
+      try {
+        const snapshot = await get(coinRef);
+        if (snapshot.exists()) {
+          setAvailableCoins(snapshot.val());
+        } else {
+          console.error("Error retrieving available coins.");
         }
-    
-        try {
-            const response = await axios.post("http://localhost:5000/api/print", {
-                printerName: selectedPrinter,
-                copies: copies,
-            });
-    
-            if (response.data.success) {
-                alert("Xerox job sent to the printer successfully!");
-            } else {
-                alert("Failed to send Xerox job.");
-            }
-        } catch (err) {
-            console.error("Xerox job error:", err);
-            alert("Failed to send Xerox job.");
-        } finally {
-            setIsLoading(false);
-        }
+      } catch (error) {
+        console.error("Error fetching available coins:", error);
+      }
     };
+    fetchAvailableCoins();
+  }, []);
+
+  const handlePrint = async () => {
+    setIsLoading(true);
+    if (!selectedPrinter) {
+      alert("No printer selected! Please choose a printer first.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Gamitin ang tamang Xerox API endpoint
+      const response = await axios.post("http://localhost:5000/xerox", {
+        printerName: selectedPrinter,
+      });
+
+      if (response.data.status === "success") {
+        alert("Xerox job sent to the printer successfully!");
+      } else {
+        alert("Failed to send Xerox job.");
+      }
+    } catch (err) {
+      console.error("Xerox job error:", err);
+      alert("Failed to send Xerox job.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -96,7 +80,6 @@ const Xerox = () => {
 
       {/* Main Box Container */}
       <div className="flex flex-col w-full h-full bg-gray-200 rounded-lg shadow-md border-4 border-[#31304D] p-6 space-x-4 relative">
-
         {/* Top Section */}
         <div className="flex w-full space-x-6">
           {/* Left Side */}
@@ -117,35 +100,27 @@ const Xerox = () => {
               setSelectedPrinter={setSelectedPrinter}
             />
 
-            {/* File Upload */}
-            
             {/* Page Settings */}
             <div className="mt-6 space-y-4">
               <Copies copies={copies} setCopies={setCopies} />
-
               <p className="mt-6 font-bold text-gray-700 text-2xl">
-              Inserted coins: {availableCoins}
+                Inserted coins: {availableCoins}
               </p>
-
               <SmartPriceToggle
-                
                 copies={copies}
                 isSmartPriceEnabled={isSmartPriceEnabled}
                 setIsSmartPriceEnabled={setIsSmartPriceEnabled}
                 calculatedPrice={calculatedPrice}
-                totalPages ={totalPages}
+                totalPages={totalPages}
                 setCalculatedPrice={setCalculatedPrice}
-                filePreviewUrl = {filePreviewUrl}
+                filePreviewUrl={filePreviewUrl}
               />
-          
             </div>
           </div>
-
-          
         </div>
 
-     {/* Bottom Section (Print Button) */}
-     <div className="flex flex-col items-center mt-auto pt-6">
+        {/* Bottom Section (Xerox Button) */}
+        <div className="flex flex-col items-center mt-auto pt-6">
           {isLoading ? (
             <button
               disabled
