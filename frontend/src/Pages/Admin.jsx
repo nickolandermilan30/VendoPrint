@@ -26,12 +26,14 @@ const Admin = () => {
       const db = getDatabase();
 
       // Fetch Coins Data
-      const coinsSnapshot = await get(dbRef(db, 'coins'));
+      const coinsSnapshot = await get(dbRef(db, 'files'));
       const weeklyCoinsMap = {};
       if (coinsSnapshot.exists()) {
         Object.values(coinsSnapshot.val()).forEach(entry => {
-          const week = `Week ${getWeekNumber(entry.timestamp)}`;
-          weeklyCoinsMap[week] = (weeklyCoinsMap[week] || 0) + 1;
+          if (entry.timestamp && entry.finalPrice) {
+            const week = `Week ${getWeekNumber(entry.timestamp)}`;
+            weeklyCoinsMap[week] = (weeklyCoinsMap[week] || 0) + entry.finalPrice;
+          }
         });
       }
       

@@ -9,7 +9,7 @@ import axios from 'axios';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SUMATRA_PATH = "C:\Users\aldri\Downloads\SumatraPDF-3.5.2-64-install.exe";
+const SUMATRA_PATH = "C:\Users\LENOVO\Downloads/SumatraPDF-3.5.2-64-install.exe";
 
 
 const getPrintersFromPowerShell = () => {

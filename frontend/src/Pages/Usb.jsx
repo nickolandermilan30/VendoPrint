@@ -300,6 +300,10 @@ const Usb = () => {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
+          orientation: orientation,
+          paperSize: selectedSize,
+          pageOption: selectedPageOption,
+          customPageRange: customPageRange,
         });
 
         if (response.data.success) {

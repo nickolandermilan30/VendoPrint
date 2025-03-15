@@ -68,22 +68,39 @@ const Printer = () => {
 
   useEffect(() => {
     const fetchFiles = () => {
-      const queueRef = ref(realtimeDb, "uploadedFiles"); // Reference to 'uploadedFiles' in Realtime DB
-
-      onValue(queueRef, (snapshot) => {
+      const uploadedFilesRef = ref(realtimeDb, "uploadedFiles");
+      const queueRef = ref(realtimeDb, "files"); // Fetching print queue
+  
+      onValue(uploadedFilesRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           const filesArray = Object.keys(data).map((key) => ({
-            id: key, // Unique Firebase key
-            ...data[key], // Spread file data (name, URL, totalPages)
+            id: key,
+            ...data[key],
           }));
           setUploadedFiles(filesArray);
         } else {
-          setUploadedFiles([]); 
+          setUploadedFiles([]);
+        }
+      });
+  
+      onValue(queueRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const queueArray = Object.keys(data)
+            .map((key) => ({
+              id: key,
+              ...data[key],
+            }))
+            .filter((file) => file.status === "Pending" || file.status === "Processing"); // ✅ Filter both Pending & Processing
+  
+          setQueue(queueArray); // ✅ Set filtered queue
+        } else {
+          setQueue([]);
         }
       });
     };
-
+  
     fetchFiles();
   }, []);
 
@@ -231,7 +248,7 @@ const cancelPrintJob = (fileId) => {
 
       <div className="w-full lg:w-80 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
         <h2 className="text-xl font-bold">Printer Queue</h2>
-        <div className="flex-1 flex items-center justify-center w-full">
+        <div className="flex-1 flex items-center justify-center w-full overflow-x-hidden overflow-y-invesible max-h-60">
         {queue.length === 0 ? (
             <p>No files in the queue</p>
           ) : (
