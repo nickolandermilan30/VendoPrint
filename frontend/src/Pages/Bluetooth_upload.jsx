@@ -301,14 +301,9 @@ const BTUpload = () => {
 
         // Send print job request
         const response = await axios.post("http://localhost:5000/api/print", {
-            printerName: selectedPrinter,
-            fileUrl: finalFileUrlToPrint,
-            copies: copies,
-            orientation: orientation,
-            paperSize: selectedSize,
-            pageOption: selectedPageOption,
-            customPageRange: customPageRange,
-            isColor: isColor ? "Color" : "Black and White"
+          printerName: selectedPrinter,
+          fileUrl: finalFileUrlToPrint,
+          copies: copies,
         });
 
         if (!response.data.success) {
