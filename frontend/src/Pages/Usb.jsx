@@ -150,6 +150,7 @@ const Usb = () => {
 
   const handlePrint = async () => {
     setIsLoading(true);
+  
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       return;
@@ -158,13 +159,15 @@ const Usb = () => {
       alert("No printer selected! Please choose a printer first.");
       return;
     }
-
-      // Fetch current available coins from Firebase
+  
+    // Fetch current available coins from Firebase
     const coinRef = dbRef(realtimeDb, "coinCount");
+    let currentCoins = 0;
+    
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        setAvailableCoins(snapshot.val());
+        currentCoins = snapshot.val().availableCoins;
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);
@@ -177,21 +180,18 @@ const Usb = () => {
       return;
     }
   
-    // Check if availableCoins is enough to print
-    if (availableCoins < calculatedPrice) {
+    // Check if user has enough coins
+    if (currentCoins < calculatedPrice) {
       alert("Not enough coins to proceed with printing.");
-      
       setIsLoading(false);
       return;
     }
   
     let finalFileUrlToPrint = filePreviewUrl;
-
+  
     try {
       if (fileToUpload?.type === "application/pdf") {
-        const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
-          res.arrayBuffer()
-        );
+        const existingPdfBytes = await fetch(filePreviewUrl).then(res => res.arrayBuffer());
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
   
         const indicesToKeep = getPageIndicesToPrint({
@@ -210,7 +210,7 @@ const Usb = () => {
   
         copiedPages.forEach((page) => {
           if (orientation === "Landscape") {
-            page.setRotation(degrees(90)); // Rotate page if landscape
+            page.setRotation(degrees(90));
           }
           newPdfDoc.addPage(page);
         });
@@ -223,21 +223,14 @@ const Usb = () => {
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
   
         await uploadBytesResumable(storageRef2, newPdfBlob);
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl;
+        finalFileUrlToPrint = await getDownloadURL(storageRef2);
       } 
-  
-      else if (
-        fileToUpload?.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      ) {
-        const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
-          res.arrayBuffer()
-        );
-        const pdfDoc = await PDFDocument.create();
+      else if (fileToUpload?.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        const arrayBuffer = await fetch(filePreviewUrl).then(res => res.arrayBuffer());
         const extractedText = await mammoth.extractRawText({ arrayBuffer });
   
-        const page = pdfDoc.addPage([612, 792]); // Default Letter size
+        const newPdfDoc = await PDFDocument.create();
+        const page = newPdfDoc.addPage([612, 792]); // Default Letter size
         const { width, height } = page.getSize();
   
         if (orientation === "Landscape") {
@@ -249,35 +242,28 @@ const Usb = () => {
           y: height - 50,
           size: 12,
         });
-
- 
+  
         const newPdfBytes = await newPdfDoc.save();
-
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
-
-
+  
         const timeStamp = Date.now();
-        const newPdfName = `partial-pages-${timeStamp}.pdf`;
+        const newPdfName = `converted-${timeStamp}.pdf`;
         const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-
+  
         await uploadBytesResumable(storageRef2, newPdfBlob);
-
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl
+        finalFileUrlToPrint = await getDownloadURL(storageRef2);
       } 
-
       else {
-      
         if (selectedPageOption !== "All") {
           alert("Partial page selection is only supported for PDF right now.");
         }
       }
-
- 
+  
+      // Submit print job to Firebase
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
-        fileUrl: finalFileUrlToPrint, 
+        fileUrl: finalFileUrlToPrint,
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -286,17 +272,13 @@ const Usb = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        finalPrice:  calculatedPrice,
+        finalPrice: calculatedPrice,
         timestamp: new Date().toISOString(),
         status: "Pending"
       });
-
-      const updatedCoins = availableCoins - calculatedPrice;
-      await update(dbRef(realtimeDb, "coinCount"), { availableCoins: updatedCoins });
-      alert("Print job sent successfully. Coins deducted.");
-
-      try {
-        const response = await axios.post("http://localhost:5000/api/print", {
+  
+      // Send print job request
+      const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
@@ -304,21 +286,22 @@ const Usb = () => {
           paperSize: selectedSize,
           pageOption: selectedPageOption,
           customPageRange: customPageRange,
-        });
-
-        if (response.data.success) {
-          alert("Print job sent to the printer!");
-        } else {
-          alert("Failed to send print job to the printer.");
-        }
-      } catch (err) {
-        console.error("Print job error:", err);
+          isColor:isColor ? "Color" : "Black and White"
+      });
+  
+      if (!response.data.success) {
+        throw new Error("Failed to send print job to the printer.");
       }
-
+  
+      // Deduct coins after successful print job submission
+      const updatedCoins = currentCoins - calculatedPrice;
+      await update(coinRef, { availableCoins: updatedCoins });
+  
+      alert("Print job sent successfully. Coins deducted.");
     } catch (error) {
       console.error("Error preparing the print job:", error);
       alert("Failed to prepare print job. Please try again.");
-    } finally{
+    } finally {
       setIsLoading(false);
     }
   };

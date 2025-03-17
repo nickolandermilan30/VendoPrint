@@ -216,6 +216,11 @@ const QRUpload = () => {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
+          orientation: orientation,
+          paperSize: selectedSize,
+          pageOption: selectedPageOption,
+          customPageRange: customPageRange,
+          isColor:isColor ? "Color" : "Black and White"
         });
 
         if (response.data.success) {
