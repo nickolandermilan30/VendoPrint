@@ -55,33 +55,35 @@ const QRUpload = () => {
 
 
   
-    useEffect(() => {
-      const fetchAvailableCoins = async () => {
-        const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
-        try {
-          const snapshot = await get(coinRef);
-          if (snapshot.exists()) {
-            setAvailableCoins(snapshot.val());
-          } else {
-            console.error("Error retrieving available coins.");
-          }
-        } catch (error) {
-          console.error("Error fetching available coins:", error);
-        }
-      };
+  useEffect(() => {
+    const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
     
-      fetchAvailableCoins();
-    }, []);
+    // Listen for real-time updates
+    const unsubscribe = onValue(coinRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setAvailableCoins(snapshot.val());
+      } else {
+        console.error("Error retrieving available coins.");
+      }
+    }, (error) => {
+      console.error("Error fetching available coins:", error);
+    });
+    
+    // Cleanup function to unsubscribe when component unmounts
+    return () => unsubscribe();
+  }, []);
 
  
   const handlePrint = async () => {
     setIsLoading(true);
     if (!fileUrl) {
       alert("No file uploaded! Please upload a file before printing.");
+      setIsLoading(false);
       return;
     }
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
+      setIsLoading(false);
       return;
     }
 

@@ -45,24 +45,22 @@ const BTUpload = () => {
   const [availableCoins, setAvailableCoins] = useState(0);
 
   useEffect(() => {
-    const fetchAvailableCoins = async () => {
-      const coinRef = dbRef(realtimeDb, "coinCount");
-      try {
-        const snapshot = await get(coinRef);
+      const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
+      
+      // Listen for real-time updates
+      const unsubscribe = onValue(coinRef, (snapshot) => {
         if (snapshot.exists()) {
-        
-          const data = snapshot.val();
-
-          setAvailableCoins(data.availableCoins);
+          setAvailableCoins(snapshot.val());
         } else {
           console.error("Error retrieving available coins.");
         }
-      } catch (error) {
+      }, (error) => {
         console.error("Error fetching available coins:", error);
-      }
-    };
-    fetchAvailableCoins();
-  }, []);
+      });
+      
+      // Cleanup function to unsubscribe when component unmounts
+      return () => unsubscribe();
+    }, []);
 
 
 

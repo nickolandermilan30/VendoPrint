@@ -48,23 +48,22 @@ const Usb = () => {
 
 
   useEffect(() => {
-    const fetchAvailableCoins = async () => {
       const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
-      try {
-        const snapshot = await get(coinRef);
+      
+      // Listen for real-time updates
+      const unsubscribe = onValue(coinRef, (snapshot) => {
         if (snapshot.exists()) {
           setAvailableCoins(snapshot.val());
         } else {
           console.error("Error retrieving available coins.");
         }
-      } catch (error) {
+      }, (error) => {
         console.error("Error fetching available coins:", error);
-      }
-    };
-  
-    fetchAvailableCoins();
-  }, []);
-
+      });
+      
+      // Cleanup function to unsubscribe when component unmounts
+      return () => unsubscribe();
+    }, []);
 
 
   const handleFileSelect = (event) => {
