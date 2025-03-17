@@ -72,6 +72,7 @@ const QRUpload = () => {
     // Cleanup function to unsubscribe when component unmounts
     return () => unsubscribe();
   }, []);
+  
 
  
   const handlePrint = async () => {
