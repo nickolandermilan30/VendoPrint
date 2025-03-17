@@ -230,6 +230,14 @@ const Usb = () => {
                 }
                 newPdfDoc.addPage(page);
             });
+            if (!isColor) {
+              copiedPages.forEach((page) => {
+                  page.drawRectangle({
+                      color: rgb(0, 0, 0),
+                      opacity: 0.8,
+                  });
+              });
+          }
 
             const newPdfBytes = await newPdfDoc.save();
             const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
@@ -256,6 +264,7 @@ const Usb = () => {
                 x: 50,
                 y: height - 50,
                 size: 12,
+                color: isColor ? rgb(0, 0, 0) : grayscale(0.1),
             });
 
             const newPdfBytes = await newPdfDoc.save();
@@ -296,6 +305,7 @@ const Usb = () => {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
+          isColor: isColor,
         });
 
         if (!response.data.success) {
