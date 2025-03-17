@@ -415,23 +415,30 @@ const Usb = () => {
 
      {/* Bottom Section (Print Button) */}
      <div className="flex flex-col items-center mt-auto pt-6">
-          {isLoading ? (
-            <button
-              disabled
-              className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
-            >
-              <i className="fa fa-spinner fa-spin mr-2"></i>
-              Printing...
-            </button>
-          ) : (
-            <button
-              onClick={handlePrint}
-              className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
-            >
-              Print <FaPrint className="ml-2 text-white" />
-            </button>
-          )}
-        </div>
+      {isLoading ? (
+        <button
+          disabled
+          className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+        >
+          <i className="fa fa-spinner fa-spin mr-2"></i>
+          Printing...
+        </button>
+      ) : !selectedPrinter ? (
+        <button
+          onClick={() => alert("Please select an available printer before printing.")}
+          className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+        >
+          Select Printer
+        </button>
+      ) : (
+        <button
+          onClick={handlePrint}
+          className="w-40 py-3 bg-[#31304D] text-white text-lg font-bold rounded-lg mt-6 flex items-center justify-center"
+        >
+          Print <FaPrint className="ml-2 text-white" />
+        </button>
+      )}
+    </div>
       </div>
     </div>
   );
