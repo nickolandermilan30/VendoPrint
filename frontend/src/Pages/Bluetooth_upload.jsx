@@ -46,12 +46,14 @@ const BTUpload = () => {
 
   useEffect(() => {
     const fetchAvailableCoins = async () => {
-      const coinRef = dbRef(realtimeDb, "coinCount/availableCoins");
+      const coinRef = dbRef(realtimeDb, "coinCount");
       try {
-
         const snapshot = await get(coinRef);
         if (snapshot.exists()) {
-          setAvailableCoins(snapshot.val());
+        
+          const data = snapshot.val();
+
+          setAvailableCoins(data.availableCoins);
         } else {
           console.error("Error retrieving available coins.");
         }
@@ -61,6 +63,7 @@ const BTUpload = () => {
     };
     fetchAvailableCoins();
   }, []);
+
 
 
   const [showModal, setShowModal] = useState(false);
@@ -167,12 +170,15 @@ const BTUpload = () => {
       return;
     }
 
-   
+    // Fetch the latest coin count from Firebase
     const coinRef = dbRef(realtimeDb, "coinCount");
+    let currentCoins = 0;
     try {
       const snapshot = await get(coinRef);
       if (snapshot.exists()) {
-        setAvailableCoins(snapshot.val());
+        const data = snapshot.val(); // e.g. { availableCoins: 99993 }
+        currentCoins = data.availableCoins; // e.g. 99993
+        setAvailableCoins(currentCoins);    // store it as a number in state
       } else {
         alert("Error retrieving available coins.");
         setIsLoading(false);
@@ -185,7 +191,8 @@ const BTUpload = () => {
       return;
     }
 
-    if (availableCoins < calculatedPrice) {
+    // Compare numeric coin value to calculatedPrice
+    if (currentCoins < calculatedPrice) {
       alert("Not enough coins to proceed with printing.");
       setIsLoading(false);
       return;
@@ -194,7 +201,7 @@ const BTUpload = () => {
     let finalFileUrlToPrint = filePreviewUrl;
 
     try {
-   
+      // If the file is a PDF, we might do partial-page extraction
       if (fileToUpload?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
@@ -234,7 +241,7 @@ const BTUpload = () => {
         const newUrl = await getDownloadURL(storageRef2);
         finalFileUrlToPrint = newUrl;
       }
-   
+      // If the file is a docx, convert to PDF first
       else if (
         fileToUpload?.type ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -269,12 +276,12 @@ const BTUpload = () => {
         const newUrl = await getDownloadURL(storageRef2);
         finalFileUrlToPrint = newUrl;
       } else {
-    
         if (selectedPageOption !== "All") {
           alert("Partial page selection is only supported for PDF right now.");
         }
       }
 
+      // Save the print job info to the DB
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
         fileName: fileToUpload?.name,
@@ -292,12 +299,12 @@ const BTUpload = () => {
         status: "Pending",
       });
 
-     
-      const updatedCoins = availableCoins - calculatedPrice;
+      // Deduct coins
+      const updatedCoins = currentCoins - calculatedPrice;
       await update(coinRef, { availableCoins: updatedCoins });
-
       alert("Print job sent successfully. Coins deducted.");
 
+      // Optionally trigger your local print server
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,

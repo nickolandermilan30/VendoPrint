@@ -28,63 +28,114 @@ const Printer = () => {
 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+ 
   const [isUsbModalOpen, setIsUsbModalOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [queue, setQueue] = useState([]);
+  const [prevUploadedCount, setPrevUploadedCount] = useState(0);
   
 
   useEffect(() => {
-    console.log("From FileUpload:", uploadedFileName, uploadedFileUrl, uploadedFileTotalPages);
-    
-    const queueRef = ref(realtimeDb, "files");
-
-    const unsubscribe = onValue(queueRef, (snapshot) => {
-      const data = snapshot.val();
-      console.log("Raw data from Firebase:", data);
-
-      if (data) {
-        const updatedQueue = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
-
-        
-
-        console.log("Processed queue:", updatedQueue);
-        setQueue(updatedQueue);
-      } else {
-        setQueue([]);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     const fetchFiles = () => {
-      const queueRef = ref(realtimeDb, "uploadedFiles"); // Reference to 'uploadedFiles' in Realtime DB
-
+      const queueRef = ref(realtimeDb, "uploadedFiles"); 
+  
       onValue(queueRef, (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
           const filesArray = Object.keys(data).map((key) => ({
-            id: key, // Unique Firebase key
-            ...data[key], // Spread file data (name, URL, totalPages)
+            id: key, 
+            ...data[key], 
           }));
+  
+    
+          if (filesArray.length > prevUploadedCount && isModalOpen) {
+           
+            setIsModalOpen(false);
+          }
+
           setUploadedFiles(filesArray);
+          setPrevUploadedCount(filesArray.length);
         } else {
-          setUploadedFiles([]); 
+          setUploadedFiles([]);
+          setPrevUploadedCount(0);
         }
       });
     };
+  
+    fetchFiles();
+  }, [prevUploadedCount, isModalOpen]);
+  
 
+  useEffect(() => {
+    const fetchFiles = () => {
+      const uploadedFilesRef = ref(realtimeDb, "uploadedFiles");
+      const queueRef = ref(realtimeDb, "files"); // Fetching print queue
+  
+      onValue(uploadedFilesRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const filesArray = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+          setUploadedFiles(filesArray);
+        } else {
+          setUploadedFiles([]);
+        }
+      });
+  
+      onValue(queueRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const queueArray = Object.keys(data)
+            .map((key) => ({
+              id: key,
+              ...data[key],
+            }))
+            .filter((file) => file.status === "Pending" || file.status === "Processing"); // ✅ Filter both Pending & Processing
+  
+          setQueue(queueArray); // ✅ Set filtered queue
+        } else {
+          setQueue([]);
+        }
+      });
+    };
+  
     fetchFiles();
   }, []);
 
-  const cancelPrintJob = (fileId) => {
-    setQueue((prevQueue) => prevQueue.filter(file => file.id !== fileId));
-  };
+  const removeUploadedFile = (fileId) => {
+    if (!window.confirm("Are you sure you want to delete this uploaded file?")) {
+      return;
+    }
   
+    remove(ref(realtimeDb, `uploadedFiles/${fileId}`))
+      .then(() => {
+        console.log(`File with ID ${fileId} removed from 'uploadedFiles' in DB.`);
+      })
+      .catch((error) => {
+        console.error("Error removing uploaded file:", error);
+      });
+  };
+
+  
+// Replace the existing cancelPrintJob with this:
+const cancelPrintJob = (fileId) => {
+  
+  if (!window.confirm("Are you sure you want to remove this file from the queue?")) {
+    return;
+  }
+
+
+  remove(ref(realtimeDb, `files/${fileId}`))
+    .then(() => {
+      console.log(`File with ID ${fileId} removed from queue in DB.`);
+    })
+    .catch((error) => {
+      console.error("Error removing file from queue:", error);
+    });
+};
+
   const clearAllFiles = async () => {
     if (!window.confirm("Are you sure you want to clear all files? This action cannot be undone.")) {
       return;
@@ -197,7 +248,7 @@ const Printer = () => {
 
       <div className="w-full lg:w-80 h-auto lg:h-[90vh] bg-gray-400 mt-6 lg:mt-0 lg:ml-6 rounded-lg shadow-md flex flex-col items-center p-4">
         <h2 className="text-xl font-bold">Printer Queue</h2>
-        <div className="flex-1 flex items-center justify-center w-full">
+        <div className="flex-1 flex items-center justify-center w-full overflow-x-hidden overflow-y-invesible max-h-60">
         {queue.length === 0 ? (
             <p>No files in the queue</p>
           ) : (
@@ -239,21 +290,27 @@ const Printer = () => {
             <p>No uploaded files</p>
           ) : (
             <ul className="w-full">
-              {uploadedFiles.map((file) => (
-                <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
-                  {/* File Icon Placeholder (Replace with getFileIcon if you have it) */}
-                  <span>📄</span>  
+                {uploadedFiles.map((file) => (
+          <li key={file.id} className="p-2 border-b border-gray-300 flex items-center gap-2">
+            <span>📄</span>
+            <div>
+              <Link
+                to={`/qr?name=${encodeURIComponent(file.fileName)}&url=${encodeURIComponent(file.fileUrl)}&pages=${encodeURIComponent(file.totalPages)}`}
+                className="text-dark text-sm"
+              >
+                <p><strong>Name:</strong> {file.fileName}</p>
+              </Link>
+            </div>
 
-                  <div>
-                    <Link
-                      to={`/qr?name=${encodeURIComponent(file.fileName)}&url=${encodeURIComponent(file.fileUrl)}&pages=${encodeURIComponent(file.totalPages)}`}
-                      className="text-dark text-sm"
-                    >
-                      <p><strong>Name:</strong> {file.fileName}</p>
-                    </Link>
-                  </div>
-                </li>
-              ))}
+            {/* Add an "X" button to remove from DB */}
+            <button
+              onClick={() => removeUploadedFile(file.id)}
+              className="ml-auto text-red-500 hover:text-red-700"
+            >
+              <FaTimes size={18} />
+            </button>
+          </li>
+        ))}
             </ul>
           )}
         </div>

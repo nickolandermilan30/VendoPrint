@@ -1,4 +1,3 @@
-// printer_controller.js
 import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
@@ -6,19 +5,15 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
-// Workaround para makuha ang __dirname sa ESM:
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path kung saan naka-install ang SumatraPDF (i-adjust kung kinakailangan)
-const SUMATRA_PATH = "C:\Users\LENOVO\Downloads\SumatraPDF-3.5.2-64-install.exe";
+const SUMATRA_PATH = "C:\Users\aldri\Downloads\SumatraPDF-3.5.2-64-install.exe";
 
-/**
- * Kumuha ng listahan ng mga printer gamit ang PowerShell.
- */
+
 const getPrintersFromPowerShell = () => {
   return new Promise((resolve, reject) => {
-    // Ginagamit ang PowerShell command na Get-Printer
     const command =
       'powershell.exe -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"';
     exec(command, (error, stdout, stderr) => {
@@ -26,7 +21,6 @@ const getPrintersFromPowerShell = () => {
         console.error('Error getting printers:', error);
         return reject(new Error('Failed to retrieve printers'));
       }
-      // Hatiin ang output at alisin ang mga walang laman na linya
       const printerList = stdout
         .split('\n')
         .map((line) => line.trim())
@@ -36,9 +30,7 @@ const getPrintersFromPowerShell = () => {
   });
 };
 
-/**
- * Endpoint handler para kunin ang listahan ng mga printer.
- */
+
 export const getPrintersHandler = async (req, res) => {
   try {
     const printerNames = await getPrintersFromPowerShell();
@@ -51,7 +43,7 @@ export const getPrintersHandler = async (req, res) => {
 };
 
 
-const printFileWithSumatra = (pdfPath, printerName) => {
+ export const printFileWithSumatra = (pdfPath, printerName) => {
   return new Promise((resolve, reject) => {
 
     const command = `"${SUMATRA_PATH}" -print-to "${printerName}" -silent "${pdfPath}"`;
