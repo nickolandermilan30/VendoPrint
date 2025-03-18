@@ -305,7 +305,7 @@ const Usb = () => {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
-          isColor: isColor,
+          
         });
 
         if (!response.data.success) {
