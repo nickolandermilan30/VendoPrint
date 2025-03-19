@@ -279,7 +279,7 @@ const Usb = () => {
  
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
-        fileName: fileName,
+        fileName: fileToUpload?.name,
         fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
