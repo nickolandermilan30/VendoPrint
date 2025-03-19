@@ -55,6 +55,7 @@ const Usb = () => {
     const unsubscribe = onValue(coinRef, (snapshot) => {
       if (snapshot.exists()) {
         setAvailableCoins(snapshot.val());
+        
       } else {
         console.error("Error retrieving available coins.");
       }
