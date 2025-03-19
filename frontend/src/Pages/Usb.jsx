@@ -153,43 +153,45 @@ const Usb = () => {
     setIsLoading(true);
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
+      setIsLoading(false);
       return;
     }
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
-      return;
-    }
-
-      // Fetch current available coins from Firebase
-    const coinRef = dbRef(realtimeDb, "coinCount");
-    try {
-      const snapshot = await get(coinRef);
-      if (snapshot.exists()) {
-        setAvailableCoins = snapshot.val();
-      } else {
-        alert("Error retrieving available coins.");
-        setIsLoading(false);
-        return;
-      }
-    } catch (error) {
-      console.error("Error fetching available coins:", error);
-      alert("Error fetching available coins.");
       setIsLoading(false);
       return;
     }
-  
-    // Check if availableCoins is enough to print
+
+    // Fetch current available coins from Firebase
+        const coinRef = dbRef(realtimeDb, "coinCount");
+        try {
+          const snapshot = await get(coinRef);
+          if (snapshot.exists()) {
+            setAvailableCoins = snapshot.val();
+          } else {
+            alert("Error retrieving available coins.");
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Error fetching available coins:", error);
+          alert("Error fetching available coins.");
+          setIsLoading(false);
+          return;
+        }
+
+      // Check if availableCoins is enough to print
     if (availableCoins < calculatedPrice) {
       alert("Not enough coins to proceed with printing.");
-      
       setIsLoading(false);
       return;
     }
   
+  
     let finalFileUrlToPrint = filePreviewUrl;
-
+  
     try {
-      if (fileToUpload?.type === "application/pdf") {
+      if (filePreviewUrl?.type === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
         );
@@ -199,6 +201,7 @@ const Usb = () => {
           totalPages,
           selectedPageOption,
           customPageRange,
+          orientation
         });
   
         if (indicesToKeep.length === 0) {
@@ -215,21 +218,24 @@ const Usb = () => {
           }
           newPdfDoc.addPage(page);
         });
+        if (!isColor) {
+          copiedPages.forEach((page) => {
+              page.drawRectangle({
+                  color: rgb(0, 0, 0),
+                  opacity: 0.8,
+              });
+          });
+      }
   
         const newPdfBytes = await newPdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
   
-        const timeStamp = Date.now();
-        const newPdfName = `processed-${timeStamp}.pdf`;
-        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-  
-        await uploadBytesResumable(storageRef2, newPdfBlob);
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl;
+        const timeStamp = Date.now()
+        finalFileUrlToPrint = filePreviewUrl;
       } 
   
       else if (
-        fileToUpload?.type ===
+        filePreviewUrl?.type ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
@@ -249,8 +255,10 @@ const Usb = () => {
           x: 50,
           y: height - 50,
           size: 12,
+          color: isColor ? rgb(0, 0, 0) : grayscale(0.1),
         });
-
+        
+  
  
         const newPdfBytes = await newPdfDoc.save();
 
@@ -258,13 +266,7 @@ const Usb = () => {
 
 
         const timeStamp = Date.now();
-        const newPdfName = `partial-pages-${timeStamp}.pdf`;
-        const storageRef2 = ref(storage, `uploads/${newPdfName}`);
-
-        await uploadBytesResumable(storageRef2, newPdfBlob);
-
-        const newUrl = await getDownloadURL(storageRef2);
-        finalFileUrlToPrint = newUrl
+        finalFileUrlToPrint = filePreviewUrl
       } 
 
       else {
@@ -277,7 +279,7 @@ const Usb = () => {
  
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
-        fileName: fileToUpload?.name,
+        fileName: fileName,
         fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
@@ -287,20 +289,20 @@ const Usb = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        finalPrice:  calculatedPrice,
+        finalPrice:calculatedPrice,
         timestamp: new Date().toISOString(),
-        status: status
+        status: "Pending"
       });
 
       const updatedCoins = availableCoins - calculatedPrice;
-      await update(coinRef, { availableCoins: updatedCoins });
-      alert("Print job sent successfully. Coins deducted.");
-
+            await update(coinRef, { availableCoins: updatedCoins });
+            alert("Print job sent successfully. Coins deducted.");
       try {
         const response = await axios.post("http://localhost:5000/api/print", {
           printerName: selectedPrinter,
           fileUrl: finalFileUrlToPrint,
           copies: copies,
+          isColor: isColor,
         });
 
         if (response.data.success) {
