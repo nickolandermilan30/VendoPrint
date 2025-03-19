@@ -151,52 +151,49 @@ const Usb = () => {
 
   const handlePrint = async () => {
     setIsLoading(true);
+  
     if (!filePreviewUrl) {
       alert("No file uploaded! Please upload a file before printing.");
       setIsLoading(false);
       return;
     }
+  
     if (!selectedPrinter) {
       alert("No printer selected! Please choose a printer first.");
       setIsLoading(false);
       return;
     }
-
-    // Fetch current available coins from Firebase
-        const coinRef = dbRef(realtimeDb, "coinCount");
-        try {
-          const snapshot = await get(coinRef);
-          if (snapshot.exists()) {
-            setAvailableCoins(snapshot.val());
-          } else {
-            alert("Error retrieving available coins.");
-            setIsLoading(false);
-            return;
-          }
-        } catch (error) {
-          console.error("Error fetching available coins:", error);
-          alert("Error fetching available coins.");
-          setIsLoading(false);
-          return;
-        }
-
-      // Check if availableCoins is enough to print
-    if (availableCoins < calculatedPrice) {
-      alert("Not enough coins to proceed with printing.");
-      setIsLoading(false);
-      return;
-    }
-  
-  
-    let finalFileUrlToPrint = filePreviewUrl;
   
     try {
+      // Fetch the file type
+      const response = await fetch(filePreviewUrl);
+      const blob = await response.blob();
+      const fileType = blob.type; // Get MIME type of the file
+  
+      // Fetch current available coins from Firebase
+      const coinRef = dbRef(realtimeDb, "coinCount");
+      const snapshot = await get(coinRef);
+      if (!snapshot.exists()) {
+        alert("Error retrieving available coins.");
+        setIsLoading(false);
+        return;
+      }
+      const availableCoins = snapshot.val().availableCoins; // Correctly extract value
+  
+      // Check if availableCoins is enough to print
+      if (availableCoins < calculatedPrice) {
+        alert("Not enough coins to proceed with printing.");
+        setIsLoading(false);
+        return;
+      }
+  
+      let finalFileUrlToPrint = filePreviewUrl;
+  
       if (fileType === "application/pdf") {
-        const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
-          res.arrayBuffer()
-        );
+        const existingPdfBytes = await response.arrayBuffer();
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
   
+        // Filter pages based on selection
         const indicesToKeep = getPageIndicesToPrint({
           totalPages,
           selectedPageOption,
@@ -214,73 +211,28 @@ const Usb = () => {
   
         copiedPages.forEach((page) => {
           if (orientation === "Landscape") {
-            page.setRotation(degrees(90)); // Rotate page if landscape
+            page.setRotation(degrees(90));
           }
           newPdfDoc.addPage(page);
         });
-        if (!isColor) {
-          copiedPages.forEach((page) => {
-              page.drawRectangle({
-                  color: rgb(0, 0, 0),
-                  opacity: 0.8,
-              });
-          });
-      }
   
+        // Save new PDF
         const newPdfBytes = await newPdfDoc.save();
         const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
   
-        const timeStamp = Date.now()
-        finalFileUrlToPrint = filePreviewUrl;
-      } 
+        // Upload the modified PDF to Firebase Storage
+        const newFileRef = ref(storage, `processed/${Date.now()}.pdf`);
+        const uploadTask = uploadBytesResumable(newFileRef, newPdfBlob);
+        await uploadTask;
   
-      else if (
-        fileType ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      ) {
-        const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
-          res.arrayBuffer()
-        );
-        const pdfDoc = await PDFDocument.create();
-        const extractedText = await mammoth.extractRawText({ arrayBuffer });
-  
-        const page = pdfDoc.addPage([612, 792]); // Default Letter size
-        const { width, height } = page.getSize();
-  
-        if (orientation === "Landscape") {
-          page.setRotation(degrees(90));
-        }
-  
-        page.drawText(extractedText.value, {
-          x: 50,
-          y: height - 50,
-          size: 12,
-          color: isColor ? rgb(0, 0, 0) : grayscale(0.1),
-        });
-        
-  
- 
-        const newPdfBytes = await newPdfDoc.save();
-
-        const newPdfBlob = new Blob([newPdfBytes], { type: "application/pdf" });
-
-
-        const timeStamp = Date.now();
-        finalFileUrlToPrint = filePreviewUrl
-      } 
-
-      else {
-      
-        if (selectedPageOption !== "All") {
-          alert("Partial page selection is only supported for PDF right now.");
-        }
+        finalFileUrlToPrint = await getDownloadURL(newFileRef);
       }
-
- 
+  
+      // Store print job details in Firebase Realtime Database
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
-        fileName: filePreviewUrl.name,
-        fileUrl: finalFileUrlToPrint, 
+        fileName: fileToUpload?.name,
+        fileUrl: finalFileUrlToPrint,
         printerName: selectedPrinter,
         copies: copies,
         paperSize: selectedSize,
@@ -289,38 +241,39 @@ const Usb = () => {
         pageOption: selectedPageOption,
         customPageRange: customPageRange,
         totalPages: totalPages,
-        finalPrice:calculatedPrice,
+        finalPrice: calculatedPrice,
         timestamp: new Date().toISOString(),
         status: "Pending"
       });
-
+  
+      // Deduct coins from the database
       const updatedCoins = availableCoins - calculatedPrice;
-            await update(coinRef, { availableCoins: updatedCoins });
-            alert("Print job sent successfully. Coins deducted.");
-      try {
-        const response = await axios.post("http://localhost:5000/api/print", {
-          printerName: selectedPrinter,
-          fileUrl: finalFileUrlToPrint,
-          copies: copies,
-          isColor: isColor,
-        });
-
-        if (response.data.success) {
-          alert("Print job sent to the printer!");
-        } else {
-          alert("Failed to send print job to the printer.");
-        }
-      } catch (err) {
-        console.error("Print job error:", err);
+      await update(coinRef, { availableCoins: updatedCoins });
+  
+      alert("Print job sent successfully. Coins deducted.");
+  
+      // Send the print request to the backend API
+      const printResponse = await axios.post("http://localhost:5000/api/print", {
+        printerName: selectedPrinter,
+        fileUrl: finalFileUrlToPrint,
+        copies: copies,
+        isColor: isColor,
+      });
+  
+      if (printResponse.data.success) {
+        alert("Print job sent to the printer!");
+      } else {
+        alert("Failed to send print job to the printer.");
       }
-
+  
     } catch (error) {
-      console.error("Error preparing the print job:", error);
-      alert("Failed to prepare print job. Please try again.");
-    } finally{
+      console.error("Error processing print job:", error);
+      alert("Failed to process print job. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className="p-4">
