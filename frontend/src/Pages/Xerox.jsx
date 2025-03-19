@@ -66,11 +66,6 @@ const Xerox = () => {
 
       alert("Scanning complete! File downloaded.");
 
-      if (response.data.status === "success") {
-        alert("Xerox job sent to the printer successfully!");
-      } else {
-        alert("Failed to send Xerox job.");
-      }
     } catch (err) {
       console.error("Xerox job error:", err);
       alert("Failed to send Xerox job.");
