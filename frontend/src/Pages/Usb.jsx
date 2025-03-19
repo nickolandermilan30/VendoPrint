@@ -55,7 +55,6 @@ const Usb = () => {
     const unsubscribe = onValue(coinRef, (snapshot) => {
       if (snapshot.exists()) {
         setAvailableCoins(snapshot.val());
-        
       } else {
         console.error("Error retrieving available coins.");
       }
@@ -168,7 +167,7 @@ const Usb = () => {
         try {
           const snapshot = await get(coinRef);
           if (snapshot.exists()) {
-            setAvailableCoins = snapshot.val();
+            setAvailableCoins(snapshot.val());
           } else {
             alert("Error retrieving available coins.");
             setIsLoading(false);
@@ -280,7 +279,7 @@ const Usb = () => {
  
       const printJobsRef = dbRef(realtimeDb, "files");
       await push(printJobsRef, {
-        fileName: fileToUpload?.name,
+        fileName: filePreviewUrl.name,
         fileUrl: finalFileUrlToPrint, 
         printerName: selectedPrinter,
         copies: copies,
