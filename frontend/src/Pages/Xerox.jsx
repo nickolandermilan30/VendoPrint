@@ -51,10 +51,20 @@ const Xerox = () => {
     }
 
     try {
-      // Gamitin ang tamang Xerox API endpoint
+     
       const response = await axios.post("http://localhost:5000/xerox", {
         printerName: selectedPrinter,
+        responseType: "blob",
       });
+
+      // Create a URL for the scanned file and allow the user to download it
+      const scannedFileUrl = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = scannedFileUrl;
+      link.download = "scanned_document.png";
+      link.click();
+
+      alert("Scanning complete! File downloaded.");
 
       if (response.data.status === "success") {
         alert("Xerox job sent to the printer successfully!");
