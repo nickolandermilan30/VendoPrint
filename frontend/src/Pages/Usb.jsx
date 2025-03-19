@@ -191,7 +191,7 @@ const Usb = () => {
     let finalFileUrlToPrint = filePreviewUrl;
   
     try {
-      if (fileType?.type === "application/pdf") {
+      if (fileType === "application/pdf") {
         const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
           res.arrayBuffer()
         );
@@ -235,7 +235,7 @@ const Usb = () => {
       } 
   
       else if (
-        fileType?.type ===
+        fileType ===
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         const arrayBuffer = await fetch(filePreviewUrl).then((res) =>
