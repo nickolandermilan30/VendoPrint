@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaPrint } from 'react-icons/fa';
 import { ezlogo } from '../assets/Icons';
 
-import DocumentPreview from "../components/xerox/document_preview";
+// import DocumentPreview from "../components/xerox/document_preview";
 import PrinterList from "../components/xerox/printerList";
 import Copies from "../components/xerox/copies";
 import SmartPriceToggle from "../components/xerox/smart_price";
@@ -52,7 +52,7 @@ const Xerox = () => {
 
     try {
      
-      const response = await axios.post("http://localhost:5000/xerox", {
+      const response = await axios.post("http://localhost:5000/api/xerox", {
         printerName: selectedPrinter,
         responseType: "blob",
       });

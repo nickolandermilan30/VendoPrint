@@ -60,7 +60,7 @@ const BTUpload = () => {
       console.error("Error fetching available coins:", error);
     });
     
-    // Cleanup function to unsubscribe when component unmounts
+  
     return () => unsubscribe();
   }, []);
   
@@ -419,7 +419,7 @@ const BTUpload = () => {
               />
 
               <p className="mt-6 font-bold text-gray-700 text-2xl">
-                Inserted coins: {availableCoins}
+                Inserted coins: {availableCoins.toString()}
               </p>
 
               <SmartPriceToggle
