@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-const scanWithWIA = (outputPath) => {
+export const scanWithWIA = (outputPath) => {
   return new Promise((resolve, reject) => {
     const powershellScript = `
       $deviceManager = New-Object -ComObject WIA.DeviceManager

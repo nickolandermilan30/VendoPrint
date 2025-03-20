@@ -14,21 +14,31 @@ const SUMATRA_PATH = "C:\Users\aldri\Downloads\SumatraPDF-3.5.2-64-install.exe";
 
 const getPrintersFromPowerShell = () => {
   return new Promise((resolve, reject) => {
-    const command =
-      'powershell.exe -NoProfile -Command "Get-Printer | Select-Object -ExpandProperty Name"';
+    const command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-Printer | Select-Object -ExpandProperty Name"';
+    
     exec(command, (error, stdout, stderr) => {
       if (error) {
-        console.error('Error getting printers:', error);
-        return reject(new Error('Failed to retrieve printers'));
+        console.error("Error getting printers:", error);
+        return reject(new Error("Failed to retrieve printers"));
       }
+
+      if (stderr) {
+        console.error("PowerShell stderr:", stderr);
+        return reject(new Error(`PowerShell Error: ${stderr}`));
+      }
+
+      console.log("PowerShell stdout:", stdout);
+
       const printerList = stdout
         .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
       resolve(printerList);
     });
   });
 };
+
 
 
 export const getPrintersHandler = async (req, res) => {
