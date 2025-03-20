@@ -45,9 +45,8 @@ export const getPrintersHandler = async (req, res) => {
 
  export const printFileWithSumatra = (pdfPath, printerName) => {
   return new Promise((resolve, reject) => {
-
-    const command = `"${SUMATRA_PATH}" -print-to "${printerName}" -silent "${pdfPath}"`;
-    exec(command, (error, stdout, stderr) => {
+    let printSettings = isColor ? "" : "-print-settings bw";
+    const command = `"${SUMATRA_PATH}" -print-to "${printerName}" ${printSettings} -silent "${pdfPath}"`;    exec(command, (error, stdout, stderr) => {
       if (error) {
         console.error('Error printing file:', error);
         return reject(new Error('Failed to print file'));
@@ -60,7 +59,8 @@ export const getPrintersHandler = async (req, res) => {
 
 export const printFileHandler = async (req, res) => {
   try {
-    const { printerName, fileUrl } = req.body;
+    
+    const { printerName, fileUrl, isColor } = req.body;
     if (!printerName || !fileUrl) {
       return res.status(400).json({
         status: 'error',
@@ -91,7 +91,7 @@ export const printFileHandler = async (req, res) => {
 
     writer.on('finish', async () => {
       try {
-        await printFileWithSumatra(filePath, printerName);
+        await printFileWithSumatra(filePath, printerName, isColor);
 
         fs.unlinkSync(filePath);
         return res.json({
