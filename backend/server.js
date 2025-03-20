@@ -18,12 +18,7 @@ app.use(express.urlencoded({ limit: "Infinity", extended: true }));
 //   allowedHeaders: ["Content-Type"],
 // }));
 
-app.use(cors({
-  origin: "https://vendo-print.vercel.app",  
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type"],
-}));
-
+app.use(cors)
 
 // Use default route
 app.use("/api", BackendRoutes);
