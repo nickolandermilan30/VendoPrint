@@ -12,11 +12,11 @@ const app = express();
 app.use(express.json({ limit: "Infinity" }));
 app.use(express.urlencoded({ limit: "Infinity", extended: true }));
 
-// app.use(cors({
-//   origin: "https://vendo-print.vercel.app",  
-//   methods: ["GET", "POST", "PUT", "DELETE"],
-//   allowedHeaders: ["Content-Type"],
-// }));
+app.use(cors({
+origin: "https://vendo-print.vercel.app",  
+methods: ["GET", "POST", "PUT", "DELETE"],
+allowedHeaders: ["Content-Type"],
+}));
 
 app.use(cors)
 
