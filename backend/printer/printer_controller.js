@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path kung saan naka-install ang SumatraPDF (i-adjust kung kinakailangan)
-const SUMATRA_PATH = "C:\\Users\\LENOVO\\Downloads\\SumatraPDF-3.5.2-64-install.exe";
+const SUMATRA_PATH = "c:\Users\Admin\Downloads\SumatraPDF-3.5.2-64-install.exe";
 
 
 const getPrintersFromPowerShell = () => {

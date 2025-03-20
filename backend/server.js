@@ -18,8 +18,7 @@ app.use(express.urlencoded({ limit: "Infinity", extended: true }));
 //   allowedHeaders: ["Content-Type"],
 // }));
 
-app.use(cors);
-
+app.use(cors)
 
 // Use default route
 app.use("/api", BackendRoutes);
