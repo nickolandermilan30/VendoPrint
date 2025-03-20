@@ -168,7 +168,7 @@ const Usb = () => {
       // Fetch the file type
       const response = await fetch(filePreviewUrl);
       const blob = await response.blob();
-      const fileType = blob.type; // Get MIME type of the file
+      const fileType = blob.type; 
   
       // Fetch current available coins from Firebase
       const coinRef = dbRef(realtimeDb, "coinCount");
