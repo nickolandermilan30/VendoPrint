@@ -312,10 +312,6 @@ const BTUpload = () => {
            fileUrl: finalFileUrlToPrint,
            copies: copies,
            isColor: isColor,
-           orientation: orientation,
-           pageOption: selectedPageOption,
-           paperSize: selectedSize,
-           customPageRange: customPageRange,
          });
  
          if (response.data.success) {
