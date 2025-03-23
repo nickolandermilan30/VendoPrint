@@ -200,7 +200,9 @@ const BTUpload = () => {
      let finalFileUrlToPrint = filePreviewUrl;
    
      try {
-       if (filePreviewUrl?.type === "application/pdf") {
+      if (filePreviewUrl?.toLowerCase().endsWith(".pdf")) {
+
+
          const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
            res.arrayBuffer()
          );

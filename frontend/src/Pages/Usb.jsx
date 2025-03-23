@@ -23,7 +23,7 @@ import mammoth from "mammoth";
 
 import { getPageIndicesToPrint } from "../utils/pageRanges";
 
-const BTUpload = () => {
+const Usb = () => {
   const navigate = useNavigate();
 
 
@@ -200,7 +200,9 @@ const BTUpload = () => {
      let finalFileUrlToPrint = filePreviewUrl;
    
      try {
-       if (filePreviewUrl?.type === "application/pdf") {
+      if (filePreviewUrl?.toLowerCase().endsWith(".pdf")) {
+
+
          const existingPdfBytes = await fetch(filePreviewUrl).then((res) =>
            res.arrayBuffer()
          );
@@ -463,4 +465,4 @@ const BTUpload = () => {
   );
 };
 
-export default BTUpload;
+export default Usb;

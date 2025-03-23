@@ -1,11 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Line, Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { getDatabase, ref as dbRef, get } from "firebase/database";
 import M_Password from '../components/M_Password';
+import SetPricing from '../components/admin/setPricing';
 
 // Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Admin = () => {
   const [showModal, setShowModal] = useState(true);
@@ -36,7 +56,7 @@ const Admin = () => {
           }
         });
       }
-      
+
       // Fetch Print Counts
       const printsSnapshot = await get(dbRef(db, 'files'));
       const weeklyPrintsMap = {};
@@ -50,15 +70,21 @@ const Admin = () => {
       }
 
       // Set State
-      const weeks = [...new Set([...Object.keys(weeklyCoinsMap), ...Object.keys(weeklyPrintsMap)])].sort();
+      const weeks = [
+        ...new Set([
+          ...Object.keys(weeklyCoinsMap),
+          ...Object.keys(weeklyPrintsMap),
+        ]),
+      ].sort();
+
       setWeekLabels(weeks);
-      setWeeklyCoins(weeks.map(week => weeklyCoinsMap[week] || 0));
-      setWeeklyPrints(weeks.map(week => weeklyPrintsMap[week] || 0));
+      setWeeklyCoins(weeks.map((week) => weeklyCoinsMap[week] || 0));
+      setWeeklyPrints(weeks.map((week) => weeklyPrintsMap[week] || 0));
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000); // Update weekly
-
+    // Optional: kung gusto mong mag-refresh weekly:
+    const interval = setInterval(fetchData, 7 * 24 * 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -100,20 +126,37 @@ const Admin = () => {
   };
 
   return (
-    <div className="p-4 flex flex-col items-center lg:items-start w-full">
+    <div className="max-w-7xl mx-auto p-4">
+      {/* Password Modal */}
       {showModal && <M_Password closeModal={() => setShowModal(false)} />}
-      <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">Admin</h1>
 
+      {/* Page Title */}
+      <h1 className="text-4xl font-bold text-[#31304D] mb-6 text-center lg:text-left">
+        Admin
+      </h1>
+
+      {/* Set Pricing Card */}
+      <div className>
+        <SetPricing />
+      </div>
+
+      {/* Charts Section */}
       <div className="flex flex-col lg:flex-row w-full gap-6">
+        {/* Weekly Coins Chart */}
         <div className="bg-white shadow-lg rounded-2xl p-6 w-full lg:w-1/2 h-auto border-4 border-[#31304D]">
-          <h2 className="text-2xl font-semibold text-[#31304D] text-center mb-4">Weekly Coins</h2>
+          <h2 className="text-2xl font-semibold text-[#31304D] text-center mb-4">
+            Weekly Coins
+          </h2>
           <div className="w-full h-60">
             <Line data={lineData} options={options} />
           </div>
         </div>
 
+        {/* Weekly Prints Chart */}
         <div className="bg-white shadow-lg rounded-2xl p-6 w-full lg:w-1/2 h-auto border-4 border-[#31304D]">
-          <h2 className="text-2xl font-semibold text-[#31304D] text-center mb-4">Weekly Prints</h2>
+          <h2 className="text-2xl font-semibold text-[#31304D] text-center mb-4">
+            Weekly Prints
+          </h2>
           <div className="w-full h-60">
             <Bar data={barData} options={options} />
           </div>

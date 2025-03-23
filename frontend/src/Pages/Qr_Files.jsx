@@ -117,8 +117,7 @@ const QRUpload = () => {
   
     let finalFileUrlToPrint = fileUrl;
   
-    try {
-      if (fileUrl?.type === "application/pdf") {
+    try {if (fileUrl?.toLowerCase().endsWith(".pdf")) {
         const existingPdfBytes = await fetch(fileUrl).then((res) =>
           res.arrayBuffer()
         );
